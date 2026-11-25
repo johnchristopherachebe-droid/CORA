@@ -22,11 +22,13 @@ from urllib.parse import quote_plus, urlparse, parse_qs
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
+
 from fastapi.responses import (
     FileResponse,
     RedirectResponse,
     JSONResponse,
-    Response
+    Response,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
