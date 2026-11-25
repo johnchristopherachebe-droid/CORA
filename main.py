@@ -22,7 +22,11 @@ from urllib.parse import quote_plus, urlparse, parse_qs
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
-from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
+from fastapi.responses import (
+    FileResponse,
+    RedirectResponse,
+    JSONResponse,
+    Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
@@ -341,7 +345,8 @@ class ExecuteRequest(BaseModel):
 class VisionRequest(BaseModel):
     image_data: str = Field(min_length=100, max_length=10_000_000)
     question: str = Field(default="Please describe what is visible on my screen and help with my question.", max_length=2000)
-
+class VoiceRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=3000)
 
 # ---------------------------------------
 # DATABASE / MEMORY
@@ -999,6 +1004,109 @@ def dashboard_file():
 @app.get("/health")
 def health():
     return {"assistant":"CORA","status":"online","cloud":CLOUD_MODE,"database_configured":bool(DATABASE_URL),"login_configured":bool(ACCESS_PASSWORD)}
+
+# ---------------------------------------
+# CORA ELEVENLABS VOICE ENGINE
+# ---------------------------------------
+
+@app.get("/voice/status")
+def voice_status():
+    api_key = os.getenv("ELEVENLABS_API_KEY", "").strip()
+    voice_id = os.getenv("ELEVENLABS_VOICE_ID", "").strip()
+
+    return {
+        "assistant": "CORA",
+        "provider": "ElevenLabs",
+        "configured": bool(api_key and voice_id),
+        "voice_id_configured": bool(voice_id),
+        "api_key_configured": bool(api_key)
+    }
+
+
+@app.post("/voice/speak")
+def voice_speak(request: VoiceRequest):
+    api_key = os.getenv("ELEVENLABS_API_KEY", "").strip()
+    voice_id = os.getenv("ELEVENLABS_VOICE_ID", "").strip()
+
+    if not api_key or not voice_id:
+        raise HTTPException(
+            status_code=503,
+            detail="ElevenLabs voice configuration is incomplete."
+        )
+
+    text = request.text.strip()
+
+    if not text:
+        raise HTTPException(
+            status_code=400,
+            detail="There is no text to speak."
+        )
+
+    payload = {
+        "text": text,
+        "model_id": os.getenv(
+            "ELEVENLABS_MODEL_ID",
+            "eleven_turbo_v2_5"
+        ),
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.75,
+            "style": 0.2,
+            "use_speaker_boost": True
+        }
+    }
+
+    url = (
+        "https://api.elevenlabs.io/v1/text-to-speech/"
+        + quote_plus(voice_id)
+        + "?output_format=mp3_44100_128"
+    )
+
+    voice_request = URLRequest(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "xi-api-key": api_key,
+            "Content-Type": "application/json",
+            "Accept": "audio/mpeg",
+            "User-Agent": "CORA-AI/1.0"
+        },
+        method="POST"
+    )
+
+    try:
+        with urlopen(voice_request, timeout=45) as response:
+            audio_data = response.read()
+
+        if not audio_data:
+            raise HTTPException(
+                status_code=502,
+                detail="ElevenLabs returned empty audio."
+            )
+
+        return Response(
+            content=audio_data,
+            media_type="audio/mpeg",
+            headers={
+                "Cache-Control": "no-store",
+                "Content-Disposition": "inline; filename=cora_voice.mp3"
+            }
+        )
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        print(
+            "CORA ELEVENLABS ERROR:",
+            type(error).__name__,
+            str(error)[:500]
+        )
+
+        raise HTTPException(
+            status_code=502,
+            detail="CORA could not generate voice audio. Check ElevenLabs configuration and account usage."
+        )
 
 @app.get("/ai/status")
 def ai_status():
