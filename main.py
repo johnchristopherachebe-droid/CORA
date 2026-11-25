@@ -44,8 +44,9 @@ DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 ACCESS_PASSWORD = os.getenv("CORA_ACCESS_PASSWORD", "").strip()
 
 app = FastAPI(
-    title="CORA AI Engine",
-    version="4.0.0",
+    title="CORA AI",
+    version="1.0.0"
+),
     docs_url=None if CLOUD_MODE else "/docs",
     redoc_url=None if CLOUD_MODE else "/redoc",
     openapi_url=None if CLOUD_MODE else "/openapi.json",
