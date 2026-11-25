@@ -297,7 +297,10 @@ class _CompletionRouter:
                     type(exc).__name__,
                     detail
                 )
-
+        # All configured providers failed; raise a clear error for the API layer.
+        raise RuntimeError(
+            "All configured AI providers failed: " + "; ".join(failures)
+        )
 class _ChatRouter:
     def __init__(self): self.completions = _CompletionRouter()
 class _AIRouterClient:
