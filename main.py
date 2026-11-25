@@ -13,6 +13,7 @@ import ipaddress
 import shutil
 import subprocess
 import webbrowser
+from groq import Groq
 from contextlib import contextmanager
 from datetime import datetime
 from html.parser import HTMLParser
@@ -197,35 +198,98 @@ class _CompletionRouter:
             model = env_model or cfg["default_model"]
             call_kwargs = dict(kwargs)
             call_kwargs["model"] = model
+            
             try:
-                headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-                if name == "openrouter":
-                    headers["HTTP-Referer"] = os.getenv("VERCEL_URL", "https://cora.vercel.app")
-                    headers["X-Title"] = "CORA AI"
-                request = URLRequest(cfg["base_url"].rstrip("/") + "/chat/completions", data=json.dumps(call_kwargs).encode("utf-8"), headers=headers, method="POST")
-                with urlopen(request, timeout=45) as response:
-                    payload = json.loads(response.read().decode("utf-8"))
-                def to_namespace(value):
-                    if isinstance(value, dict): return SimpleNamespace(**{k: to_namespace(v) for k, v in value.items()})
-                    if isinstance(value, list): return [to_namespace(v) for v in value]
-                    return value
-                result = to_namespace(payload)
+                if name == "groq":
+                    # Use Groq's official SDK instead of urllib.
+                    groq_client = Groq(
+                        api_key=key,
+                        timeout=45,
+                        max_retries=0
+                    )
+                    result = groq_client.chat.completions.create(
+                        **call_kwargs
+                    )
+                else:
+                    # Keep the existing HTTP connection for other providers.
+                    headers = {
+                        "Authorization": f"Bearer {key}",
+                        "Content-Type": "application/json"
+                    }
+
+                    if name == "openrouter":
+                        headers["HTTP-Referer"] = os.getenv(
+                            "VERCEL_URL",
+                            "https://cora.vercel.app"
+                        )
+                        headers["X-Title"] = "CORA AI"
+
+                    request = URLRequest(
+                        cfg["base_url"].rstrip("/") + "/chat/completions",
+                        data=json.dumps(call_kwargs).encode("utf-8"),
+                        headers=headers,
+                        method="POST"
+                    )
+
+                    with urlopen(request, timeout=45) as response:
+                        payload = json.loads(
+                            response.read().decode("utf-8")
+                        )
+
+                    def to_namespace(value):
+                        if isinstance(value, dict):
+                            return SimpleNamespace(**{
+                                k: to_namespace(v)
+                                for k, v in value.items()
+                            })
+                        if isinstance(value, list):
+                            return [to_namespace(v) for v in value]
+                        return value
+
+                    result = to_namespace(payload)
+
                 self.last_provider = name
                 return result
+
             except Exception as exc:
                 detail = str(exc)[:500]
-                # urllib HTTPError carries Groq's JSON error response in its body.
-                # Read only the response body; never log API keys or request headers.
-                if hasattr(exc, "read"):
+
+                # Capture provider error details without exposing credentials.
+                error_response = getattr(exc, "response", None)
+
+                if error_response is not None:
                     try:
-                        body = exc.read().decode("utf-8", errors="replace")
+                        body = error_response.text
                         if body:
                             detail = body[:1200]
                     except Exception:
                         pass
-                failures.append(f"{name}: {type(exc).__name__}")
-                print("CORA AI PROVIDER ERROR:", name, type(exc).__name__, detail)
-        raise RuntimeError("All configured AI providers failed: " + "; ".join(failures))
+
+                elif hasattr(exc, "read"):
+                    try:
+                        body = exc.read().decode(
+                            "utf-8",
+                            errors="replace"
+                        )
+                        if body:
+                            detail = body[:1200]
+                    except Exception:
+                        pass
+
+                status_code = getattr(exc, "status_code", None)
+                failure = f"{name}: {type(exc).__name__}"
+
+                if status_code:
+                    failure += f" (HTTP {status_code})"
+
+                failures.append(failure)
+
+                print(
+                    "CORA AI PROVIDER ERROR:",
+                    name,
+                    type(exc).__name__,
+                    detail
+                )
 
 class _ChatRouter:
     def __init__(self): self.completions = _CompletionRouter()
