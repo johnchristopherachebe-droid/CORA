@@ -761,42 +761,161 @@ function getCoraSelectedVoice() {
     return [...british].sort((a,b) => rankBritishVoice(b)-rankBritishVoice(a))[0] || null;
 }
 
+
+let coraAudio = null;
+let coraAudioUrl = null;
+let coraSpeechRun = 0;
+
 function stopSpeaking() {
-    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    coraSpeechRun++;
+
+    if (coraAudio) {
+        coraAudio.pause();
+        coraAudio.src = "";
+        coraAudio = null;
+    }
+
+    if (coraAudioUrl) {
+        URL.revokeObjectURL(coraAudioUrl);
+        coraAudioUrl = null;
+    }
+
+    if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+    }
+
     setCoreState(alwaysListeningEnabled ? "listening" : "idle");
 }
 
 function speak(text, onDone) {
-    if (!voiceRepliesEnabled || !("speechSynthesis" in window)) {
+    if (!voiceRepliesEnabled) {
         setCoreState(alwaysListeningEnabled ? "listening" : "idle");
         if (typeof onDone === "function") onDone();
         return;
     }
+
     stopSpeaking();
-    const utterance = new SpeechSynthesisUtterance(String(text));
-    const selectedVoice = getCoraSelectedVoice();
-    utterance.lang = "en-GB";
-    if (selectedVoice) utterance.voice = selectedVoice;
-    utterance.rate = Number(coraVoiceSettings.rate);
-    utterance.pitch = Number(coraVoiceSettings.pitch);
-    utterance.volume = Number(coraVoiceSettings.volume);
-    utterance.onstart = () => {
-        $("#voiceStatus").textContent = "CORA is speaking in a calm British English voice…";
-        setCoreState("speaking");
-    };
-    utterance.onend = () => {
+
+    const run = ++coraSpeechRun;
+    const message = String(text).slice(0, 3000);
+    let completed = false;
+
+    function finish() {
+        if (run !== coraSpeechRun || completed) return;
+        completed = true;
+
+        if (coraAudioUrl) {
+            URL.revokeObjectURL(coraAudioUrl);
+            coraAudioUrl = null;
+        }
+
+        coraAudio = null;
+
         $("#voiceStatus").textContent = alwaysListeningEnabled
-            ? (conversationActive ? "CORA is ready for your next instruction. Say “go to sleep” to end the session." : "Listening for “Hey” to begin a conversation.")
+            ? (conversationActive
+                ? "CORA is ready for your next instruction."
+                : "Listening for Hey.")
             : "Voice replies are on.";
+
         setCoreState(alwaysListeningEnabled ? "listening" : "idle");
+
         if (typeof onDone === "function") onDone();
-    };
-    utterance.onerror = () => {
-        $("#voiceStatus").textContent = "Speech playback could not start. Check the selected Windows voice.";
-        setCoreState(alwaysListeningEnabled ? "listening" : "idle");
-        if (typeof onDone === "function") onDone();
-    };
-    window.speechSynthesis.speak(utterance);
+    }
+
+    function browserFallback() {
+        if (run !== coraSpeechRun || completed) return;
+
+        if (!("speechSynthesis" in window)) {
+            $("#voiceStatus").textContent =
+                "Audio playback is unavailable in this browser.";
+            finish();
+            return;
+        }
+
+        if (coraAudio) {
+            coraAudio.pause();
+            coraAudio = null;
+        }
+
+        if (coraAudioUrl) {
+            URL.revokeObjectURL(coraAudioUrl);
+            coraAudioUrl = null;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(message);
+        const selectedVoice = getCoraSelectedVoice();
+
+        utterance.lang = "en-GB";
+        if (selectedVoice) utterance.voice = selectedVoice;
+
+        utterance.rate = Number(coraVoiceSettings.rate);
+        utterance.pitch = Number(coraVoiceSettings.pitch);
+        utterance.volume = Number(coraVoiceSettings.volume);
+
+        utterance.onstart = () => {
+            if (run !== coraSpeechRun) return;
+            $("#voiceStatus").textContent =
+                "Using the British English browser voice.";
+            setCoreState("speaking");
+        };
+
+        utterance.onend = finish;
+        utterance.onerror = finish;
+
+        try {
+            window.speechSynthesis.speak(utterance);
+        } catch (_) {
+            finish();
+        }
+    }
+
+    async function playElevenLabs() {
+        setCoreState("thinking");
+        $("#voiceStatus").textContent =
+            "CORA is preparing ElevenLabs voice audio…";
+
+        try {
+            const response = await fetch(`${API_BASE}/voice/speak`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ text: message })
+            });
+
+            if (!response.ok) {
+                throw new Error("ElevenLabs is unavailable.");
+            }
+
+            const audioBlob = await response.blob();
+
+            if (run !== coraSpeechRun) return;
+
+            coraAudioUrl = URL.createObjectURL(audioBlob);
+            coraAudio = new Audio(coraAudioUrl);
+
+            coraAudio.onplay = () => {
+                if (run !== coraSpeechRun) return;
+                $("#voiceStatus").textContent =
+                    "CORA is speaking using ElevenLabs.";
+                setCoreState("speaking");
+            };
+
+            coraAudio.onended = finish;
+            coraAudio.onerror = browserFallback;
+
+            await coraAudio.play();
+
+        } catch (_) {
+            if (run === coraSpeechRun) {
+                $("#voiceStatus").textContent =
+                    "Switching to the browser voice.";
+                browserFallback();
+            }
+        }
+    }
+
+    playElevenLabs();
 }
 
 function bindCoraVoiceStudio() {
