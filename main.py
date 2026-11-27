@@ -414,7 +414,7 @@ if not (os.getenv("VERCEL") == "1" and not DATABASE_URL):
 
 @app.middleware("http")
 async def protect_cloud_api(request: Request, call_next):
-    if not CLOUD_MODE or request.url.path in {"/", "/index.html", "/auth/login", "/health", "/favicon.ico"}:
+    if not CLOUD_MODE or request.url.path in {"/", "/index.html", "/brain.html", "/auth/login", "/health", "/favicon.ico"}:
         return await call_next(request)
     if not ACCESS_PASSWORD:
         return JSONResponse(status_code=503, content={"detail": "CORA_ACCESS_PASSWORD is not configured in Vercel."})
