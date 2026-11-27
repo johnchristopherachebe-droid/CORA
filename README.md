@@ -6,14 +6,7 @@ This release preserves the Vercel FastAPI backend, dashboard, British/Deep/Calm 
 
 CORA checks the provider keys you configure and tries providers in the order in `AI_BRAIN_ORDER`. If a provider returns an error (for example, a rate limit, unavailable model or temporary outage), CORA tries the next configured provider. Provider keys are kept on the server; they are never sent to the dashboard.
 
-Default priority:
-
-1. Google Gemini
-2. Groq
-3. Cerebras
-4. OpenRouter
-
-You can change the order, for example `groq,gemini,cerebras,openrouter`. Only providers for which you supply an API key are used. Free quotas and model availability vary by provider and can change. Automatic failover does not create unlimited free usage.
+**If `AI_BRAIN_ORDER` is not set, only Groq is used.** To get failover, set it, for example `gemini,groq,cerebras,openrouter`. Providers without a key are skipped. Free quotas and model availability vary by provider and can change. Automatic failover does not create unlimited free usage.
 
 ### Add provider keys in Vercel
 
@@ -47,10 +40,33 @@ Model IDs are defaults, not guarantees. Check each provider's current model cata
 1. Extract this ZIP.
 2. Replace the files in your existing private GitHub repository with these files. Keep the directory structure intact.
 3. Do not upload `.env`, `jarvis_memory.db`, database backups or API keys.
-4. In Vercel, add provider keys under **Settings → Environment Variables**. Keep your existing `DATABASE_URL` and `CORA_ACCESS_PASSWORD` unchanged.
-5. Ensure `AI_BRAIN_ORDER` is set to the preferred order, or use the default.
+4. In Vercel, add provider keys under **Settings → Environment Variables**. Keep your existing `DATABASE_URL` and `CORA_ACCESS_PASSWORD` unchanged, and **add a new `SESSION_SECRET`** (32+ random characters, see `.env.example`).
+5. Set `AI_BRAIN_ORDER` to your preferred order (see above).
 6. Redeploy the project.
 7. Sign in to CORA and open `/ai/status` while logged in to see which providers are configured and their priority (the endpoint never reveals keys).
+
+
+## Phase 1 upgrade: intelligence foundation
+
+**Personality.** CORA speaks in the first person in natural British English, never calls you "Sir", is honest about what she cannot do yet, and applies this everywhere (chat, research, morning briefing, skills).
+
+**Structured memory.** Memories now have categories: project, preference, decision, person, fact, general. Existing memories are kept (they become "general").
+- Chat: `remember project: ...`, `remember that I prefer ...` (category is guessed if you do not give one), `what do you remember`, `what should you remember` (she suggests; you decide), `forget memory 12`.
+- API: `GET /memories?category=project`, `POST /memories`, `PATCH /memories/{id}`, `GET /memories/suggest`, `DELETE /memories/{id}`.
+- Passwords, API keys and card numbers are refused. Nothing is saved without you asking.
+
+**Plan, act, verify, report.** Ask in plain language, for example *"Research five AI companies, compare their services and prepare a report."* CORA plans up to 8 steps, runs them with her tools, checks each result, tries one different approach if a step fails, and reports honestly.
+- Tools: web research (cited), web search, read a public page, recall memory, list/add tasks, save a note, draft text. She cannot send messages, spend money, delete anything or touch a device.
+- Verification: tasks and notes are checked by reading them back from the database; research and drafts get a second model check, and are marked "unchecked" if that check is unavailable.
+- Safety: the plan is made once from your request only. Text found on web pages or documents is treated as data and can never add steps.
+- Say `how's my task going`, `continue my task`, or `stop` in chat. API: `POST /agent/tasks`, `GET /agent/tasks`, `GET /agent/tasks/{id}`, `POST /agent/tasks/{id}/run|resume|cancel`, and `POST /agent/stop-all` (emergency stop).
+- Vercel stops a request after about 60 seconds, so a long job pauses and carries on when you say "continue". True background running arrives in Phase 4.
+
+**Security.** Login tokens are signed with `SESSION_SECRET`. Until you set it, the old password-based signing stays active so nothing breaks; `/ai/status` shows `session_secret_configured`. Once you set it, existing sessions end and you sign in again.
+
+**Code layout.** New logic lives in `cora_persona.py`, `cora_memory.py` and `cora_agent.py`. `main.py` is unchanged except for wiring. Splitting the older sections out of `main.py` is still to do.
+
+**Tests.** `python tests/test_phase1_modules.py` and `python tests/test_phase1_integration.py` (see `TEST_REPORT.md` for what they do and do not prove).
 
 ## Existing services preserved
 
