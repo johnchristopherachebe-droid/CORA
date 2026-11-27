@@ -1729,4 +1729,412 @@ const originalRecognitionResultHandler = null;
 window.addEventListener("pagehide", stopScreenShare);
 
 </script>
+<!-- ===================================================================
+ CORA CANVAS + FISH AUDIO + REACTIVE ANIMATIONS
+ Paste this whole block in public/index.html directly ABOVE the final </body></html>
+ (after the existing </script>). Nothing else in the file needs to change.
+ If anything fails, CORA falls back to exactly how it worked before.
+==================================================================== -->
+<style id="coraCanvasStyle">
+/* ---- Canvas layer (sits over the holographic core) ---- */
+#canvasLayer{position:absolute;inset:0;z-index:8;display:none;flex-direction:column;padding:12px;overflow:hidden;background:radial-gradient(ellipse at 50% 28%,rgba(38,11,48,.97),rgba(3,2,7,.985) 78%)}
+#canvasLayer.open{display:flex;animation:cvFade .45s ease both}
+#canvasLayer:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(transparent 49%,rgba(255,112,220,.05) 50%,transparent 51%);background-size:100% 5px}
+@keyframes cvFade{from{opacity:0;filter:blur(5px)}to{opacity:1;filter:blur(0)}}
+.cv-bar{position:relative;z-index:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.cv-title{flex:1;min-width:0;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:#ff9ce8;text-shadow:0 0 10px #ff58d7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cv-close{width:34px;height:34px;border-radius:50%;border:1px solid #ff70dc88;background:#170a1c;color:#ffd1f4;font-size:15px;line-height:1}
+.cv-close:hover{background:#a72b8a44;box-shadow:0 0 14px #ff55d544}
+.cv-grid{position:relative;z-index:1;flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));grid-auto-flow:dense;gap:10px;align-content:start;padding-bottom:6px}
+.cv-panel{position:relative;min-height:84px;padding:12px;border:1px solid rgba(255,112,220,.55);border-radius:7px;background:linear-gradient(135deg,rgba(26,9,31,.9),rgba(5,3,11,.8));box-shadow:0 0 18px #ef48c522,inset 0 0 18px #f14acb0c;color:#f9e8fa;opacity:0;transform:translateY(16px) scale(.96);animation:cvIn .6s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i,0)*150ms);overflow:hidden}
+.cv-panel:before{content:"";position:absolute;inset:4px;border:1px solid #ff9ce91c;pointer-events:none}
+.cv-panel:after{content:"";position:absolute;left:0;right:0;top:-40%;height:40%;background:linear-gradient(transparent,rgba(255,126,229,.28),transparent);animation:cvScan 1.1s ease-out both;animation-delay:calc(var(--i,0)*150ms + 350ms);pointer-events:none}
+@keyframes cvIn{to{opacity:1;transform:none}}
+@keyframes cvScan{to{top:120%}}
+.cv-stat{text-align:center;display:flex;flex-direction:column;justify-content:center}
+.cv-stat .v{font-size:34px;font-weight:800;color:#fff;text-shadow:0 0 14px #ff65d8,0 0 30px #ff65d855;overflow-wrap:anywhere}
+.cv-stat .l,.cv-cap,.cv-unit{font-size:10px;letter-spacing:1px;color:#bba8c4;margin-top:6px}
+.cv-panel h3{margin:0 0 8px;font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:#ff9ce8}
+.cv-panel p{margin:0;font-size:12px;line-height:1.55;color:#e8d6ee}
+.cv-chart{grid-column:span 2}
+.cv-bars{display:flex;align-items:flex-end;gap:9px;height:112px;margin-top:4px}
+.cv-bar-col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.cv-bar-col b{font-size:10px;font-weight:400;margin-bottom:3px;color:#ffe4fa}
+.cv-bar-col i{display:block;width:100%;height:0;border-radius:2px 2px 0 0;background:linear-gradient(#ff9ce8,#7b2b9e);box-shadow:0 0 10px #ff65d855;transition:height 1.1s cubic-bezier(.2,.8,.2,1)}
+.cv-bar-col span{font-size:9px;color:#bba8c4;margin-top:4px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cv-image{padding:0;grid-row:span 2;min-height:150px}
+.cv-image img{display:block;width:100%;height:100%;min-height:150px;object-fit:cover;filter:saturate(1.05) contrast(1.05)}
+.cv-image .cv-cap{position:absolute;left:0;right:0;bottom:0;margin:0;padding:20px 10px 8px;background:linear-gradient(transparent,rgba(0,0,0,.85));color:#ffe4fa}
+.cv-src{position:relative;z-index:1;font-size:10px;line-height:1.9;color:#a99ab7;padding-top:6px;max-height:44px;overflow:auto}
+.cv-src a{color:#ffb2eb;text-decoration:none;margin-right:10px}
+.cv-loading{grid-column:1/-1;display:grid;place-items:center;gap:14px;padding:46px 10px;color:#ffb5ed;font-size:11px;letter-spacing:3px;text-align:center}
+.cv-ring{width:74px;height:74px;border-radius:50%;border:2px solid #ff65d8;box-shadow:0 0 28px #ff65d8,inset 0 0 22px #ff65d855;animation:cvPulse 1.4s ease-in-out infinite}
+@keyframes cvPulse{50%{transform:scale(1.12);box-shadow:0 0 50px #ff65d8,inset 0 0 34px #ff65d888}}
+.cv-text.cv-wide{grid-column:1/-1}
+.cv-text.cv-wide p{font-size:13px;white-space:pre-wrap}
+#canvasBtn,#briefBtn,#brainBtn{white-space:nowrap}
+/* ---- Boot animation ---- */
+#coraBoot{position:absolute;inset:0;z-index:9;display:grid;place-items:center;background:#020106;transition:opacity .9s ease}
+#coraBoot.done{opacity:0;pointer-events:none}
+#coraBoot .cv-ring{display:grid;place-items:center;font-size:11px;letter-spacing:5px;color:#ffe4fa}
+/* ---- Audio-reactive orb (active only while Fish Audio speaks) ---- */
+#coreStage[data-state="speaking"] .core-orb.reactive{animation:none!important;transform:scale(calc(1 + var(--vol,0)*.16));box-shadow:0 0 calc(24px + var(--vol,0)*90px) #ff65d8,0 0 calc(60px + var(--vol,0)*120px) #e832b866,inset 0 0 calc(30px + var(--vol,0)*40px) #ff9ce9aa;transition:transform .06s linear,box-shadow .06s linear}
+@media(max-width:760px){.cv-chart{grid-column:span 1}.cv-grid{grid-template-columns:repeat(2,1fr)}.cv-stat .v{font-size:26px}}
+@media(prefers-reduced-motion:reduce){.cv-panel,.cv-panel:after,.cv-ring,#canvasLayer.open{animation:none!important;opacity:1;transform:none}.cv-bar-col i{transition:none}}
+</style>
+
+<script>
+(function () {
+  "use strict";
+  try {
+    var host = document.querySelector(".globe-wrap");
+    if (!host || typeof window.respond !== "function" || typeof window.speak !== "function") return;
+    var reduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    var E = function (tag, cls, text) {
+      var n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text !== undefined) n.textContent = text;
+      return n;
+    };
+
+    /* ================= Boot animation ================= */
+    var boot = E("div"); boot.id = "coraBoot";
+    var bootRing = E("div", "cv-ring", "CORA"); boot.appendChild(bootRing);
+    host.appendChild(boot);
+    setTimeout(function () { boot.classList.add("done"); }, reduce ? 200 : 1600);
+    setTimeout(function () { if (boot.parentNode) boot.parentNode.removeChild(boot); }, 3000);
+
+    /* ================= Canvas layer ================= */
+    var layer = E("div"); layer.id = "canvasLayer";
+    var bar = E("div", "cv-bar");
+    var title = E("div", "cv-title", "CANVAS");
+    var close = E("button", "cv-close", "\u2715"); close.type = "button"; close.setAttribute("aria-label", "Close canvas");
+    var up = E("button", "cv-close", "\uD83D\uDC4D"), down = E("button", "cv-close", "\uD83D\uDC4E");
+    up.type = down.type = "button"; up.setAttribute("aria-label", "Good answer"); down.setAttribute("aria-label", "Poor answer");
+    bar.append(title, up, down, close);
+    var grid = E("div", "cv-grid");
+    var src = E("div", "cv-src");
+    layer.append(bar, grid, src);
+    host.appendChild(layer);
+    close.addEventListener("click", function () { layer.classList.remove("open"); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") layer.classList.remove("open"); });
+
+    function showLoading(topic) {
+      title.textContent = "CANVAS \u2022 BUILDING";
+      grid.replaceChildren(); src.replaceChildren();
+      var box = E("div", "cv-loading");
+      box.append(E("div", "cv-ring"), E("div", "", "RESEARCHING \u2022 " + topic.slice(0, 60).toUpperCase()));
+      grid.appendChild(box);
+      layer.classList.add("open");
+      try { host.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {}
+    }
+
+    function countUp(node, finalText) {
+      var m = String(finalText).match(/^(\D*?)(\d[\d,]*\.?\d*)(.*)$/);
+      if (!m || reduce) { node.textContent = finalText; return; }
+      var target = parseFloat(m[2].replace(/,/g, "")), commas = m[2].indexOf(",") !== -1;
+      var decimals = (m[2].split(".")[1] || "").length, start = null;
+      if (!isFinite(target)) { node.textContent = finalText; return; }
+      function fmt(v) {
+        var s = v.toFixed(decimals);
+        return commas ? Number(s).toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) : s;
+      }
+      function step(ts) {
+        if (start === null) start = ts;
+        var t = Math.min(1, (ts - start) / 1100), eased = 1 - Math.pow(1 - t, 3);
+        node.textContent = m[1] + fmt(target * eased) + m[3];
+        if (t < 1) requestAnimationFrame(step); else node.textContent = finalText;
+      }
+      node.textContent = m[1] + fmt(0) + m[3];
+      requestAnimationFrame(step);
+    }
+
+    function typeText(node, text) {
+      if (reduce || text.length < 30) { node.textContent = text; return; }
+      var start = null, dur = Math.min(1500, text.length * 9);
+      function step(ts) {
+        if (start === null) start = ts;
+        var t = Math.min(1, (ts - start) / dur);
+        node.textContent = text.slice(0, Math.ceil(text.length * t));
+        if (t < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    function renderCanvas(data) {
+      title.textContent = "CANVAS \u2022 " + (data.title || data.topic || "");
+      grid.replaceChildren(); src.replaceChildren();
+      var heights = [], counters = [], typers = [];
+      data.panels.forEach(function (p, i) {
+        var box = E("section", "cv-panel cv-" + p.type + (p.wide ? " cv-wide" : ""));
+        box.style.setProperty("--i", i);
+        if (p.type === "stat") {
+          var v = E("div", "v", p.value); box.append(v, E("div", "l", p.label)); counters.push([v, p.value]);
+        } else if (p.type === "text") {
+          if (p.title) box.appendChild(E("h3", "", p.title));
+          var para = E("p", "", ""); box.appendChild(para); typers.push([para, p.body]);
+        } else if (p.type === "chart") {
+          box.appendChild(E("h3", "", p.title || "Data"));
+          var bars = E("div", "cv-bars"), max = Math.max.apply(null, p.values.map(Math.abs)) || 1;
+          p.values.forEach(function (val, k) {
+            var col = E("div", "cv-bar-col");
+            col.appendChild(E("b", "", String(Math.round(val * 100) / 100)));
+            var fill = E("i"); heights.push([fill, Math.max(4, Math.round(Math.abs(val) / max * 100)) + "%"]);
+            col.append(fill, E("span", "", p.labels[k]));
+            bars.appendChild(col);
+          });
+          box.appendChild(bars);
+          if (p.unit) box.appendChild(E("div", "cv-unit", "UNIT: " + p.unit));
+        } else if (p.type === "image" && /^https:\/\/upload\.wikimedia\.org\//.test(p.url || "")) {
+          var img = E("img"); img.alt = p.caption || ""; img.loading = "lazy"; img.referrerPolicy = "no-referrer"; img.src = p.url;
+          box.appendChild(img); if (p.caption) box.appendChild(E("div", "cv-cap", p.caption));
+        } else { return; }
+        grid.appendChild(box);
+      });
+      (data.sources || []).forEach(function (s) {
+        if (!/^https?:\/\//.test(s.url)) return;
+        var a = E("a", "", "[" + s.n + "] " + s.title); a.href = s.url; a.target = "_blank"; a.rel = "noopener noreferrer";
+        src.appendChild(a);
+      });
+      layer.classList.add("open");
+      setTimeout(function () {
+        heights.forEach(function (h) { h[0].style.height = h[1]; });
+        counters.forEach(function (c) { countUp(c[0], c[1]); });
+        typers.forEach(function (t) { typeText(t[0], t[1]); });
+      }, reduce ? 0 : 450);
+    }
+
+    async function api(path, method, body) {
+      var response = await fetch(API_BASE + path, { method: method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+      var data = await response.json().catch(function () { return {}; });
+      if (!response.ok) throw new Error(data.detail || "That did not work.");
+      return data;
+    }
+
+    // Shared runner: shows the loading animation, renders panels, fills the source HUD, speaks the result.
+    async function runTask(o) {
+      var restart = function () { if (o.fromAlwaysListen && typeof restartAlwaysListener === "function") restartAlwaysListener(); };
+      log("YOU", o.text);
+      log("CORA", o.working);
+      var pending = $("#chatlog").lastElementChild;
+      setCoreState("thinking", o.core);
+      setLiveWorkspace("research", o.working);
+      clearSources("Working. Verified source links will appear when it finishes.");
+      showLoading(o.loading);
+      try {
+        var out = await o.run();
+        if (pending && pending.isConnected) pending.remove();
+        renderCanvas(out.data);
+        try { renderSources((out.data.sources || []).map(function (s) { return { title: s.title, url: s.url, snippet: s.url }; }), o.core); } catch (e) {}
+        setLiveWorkspace("complete", out.done);
+        log("CORA", out.log || out.speech);
+        window.speak(out.speech, restart);
+      } catch (error) {
+        if (pending && pending.isConnected) pending.remove();
+        layer.classList.remove("open");
+        setLiveWorkspace("error", error.message);
+        var msg = "Apologies, Sir. " + error.message;
+        log("CORA", msg);
+        window.speak(msg, restart);
+      }
+    }
+    var speakable = function (t, n) { return String(t).replace(/\s*\[\d+\]/g, "").replace(/\s+/g, " ").trim().slice(0, n); };
+
+    function runCanvas(topic, fromAlwaysListen, original) {
+      return runTask({ text: original || topic, working: "Building your canvas, Sir\u2026", core: "BUILDING CANVAS \u2022 RESEARCHING",
+        loading: "RESEARCHING \u2022 " + topic.slice(0, 60).toUpperCase(), fromAlwaysListen: fromAlwaysListen,
+        run: async function () {
+          var d = await api("/agents/canvas", "POST", { topic: topic });
+          var line = d.speech || "Your canvas is ready, Sir.";
+          return { data: d, speech: line, done: "Canvas ready: " + (d.title || topic) };
+        } });
+    }
+    function runBriefing(fromAlwaysListen, original) {
+      return runTask({ text: original || "Morning briefing", working: "Preparing your briefing, Sir\u2026", core: "MORNING BRIEFING",
+        loading: "GATHERING TASKS AND NEWS", fromAlwaysListen: fromAlwaysListen,
+        run: async function () {
+          var d = await api("/agents/digest", "POST");
+          return { data: { title: "Morning briefing", panels: [{ type: "text", title: "Briefing", body: d.content, wide: true }], sources: [] },
+                   speech: d.content, done: "Briefing ready" };
+        } });
+    }
+    function runResearch(question, fromAlwaysListen, original) {
+      return runTask({ text: original || question, working: "Researching with cited sources, Sir\u2026", core: "CITED RESEARCH",
+        loading: "RESEARCHING \u2022 " + question.slice(0, 60).toUpperCase(), fromAlwaysListen: fromAlwaysListen,
+        run: async function () {
+          var d = await api("/agents/research", "POST", { question: question, depth: 2 });
+          return { data: { title: "Research \u2022 " + question.slice(0, 50), panels: [{ type: "text", title: "Answer", body: d.reply, wide: true }], sources: d.sources },
+                   speech: speakable(d.reply, 500), log: d.reply, done: "Research complete" };
+        } });
+    }
+    function runSkill(name, input, fromAlwaysListen, original) {
+      return runTask({ text: original || name, working: "Running skill " + name + "\u2026", core: "SKILL \u2022 " + name.toUpperCase(),
+        loading: "RUNNING SKILL \u2022 " + name.toUpperCase(), fromAlwaysListen: fromAlwaysListen,
+        run: async function () {
+          var d = await api("/skills/run", "POST", { skill: name, input: input });
+          return { data: { title: "Skill \u2022 " + name, panels: [{ type: "text", title: name, body: d.reply, wide: true }], sources: [] },
+                   speech: speakable(d.reply, 400), log: d.reply, done: "Skill finished" };
+        } });
+    }
+    function runBrain(fromAlwaysListen, original) {
+      return runTask({ text: original || "Brain status", working: "Checking my brain, Sir\u2026", core: "BRAIN STATUS",
+        loading: "READING TELEMETRY", fromAlwaysListen: fromAlwaysListen,
+        run: async function () {
+          var d = await api("/ai/stats?days=7", "GET");
+          var calls = 0, ok = 0;
+          d.providers.forEach(function (p) { calls += p.calls; ok += p.successes; });
+          var rate = calls ? Math.round(ok / calls * 100) : null, panels = [];
+          panels.push({ type: "stat", value: String(calls), label: "AI calls, last " + d.days + " days" });
+          if (rate !== null) panels.push({ type: "stat", value: rate + "%", label: "Success rate" });
+          var lat = d.providers.filter(function (p) { return p.avg_latency_ms != null; });
+          if (lat.length >= 2) panels.push({ type: "chart", title: "Average speed", unit: "ms", labels: lat.map(function (p) { return p.provider; }), values: lat.map(function (p) { return p.avg_latency_ms; }) });
+          if (d.providers.length >= 2) panels.push({ type: "chart", title: "Calls by provider", unit: "calls", labels: d.providers.map(function (p) { return p.provider; }), values: d.providers.map(function (p) { return p.calls; }) });
+          panels.push({ type: "stat", value: String(d.thumbs_up), label: "Thumbs up" }, { type: "stat", value: String(d.thumbs_down), label: "Thumbs down" });
+          var b = d.brain || {};
+          panels.push({ type: "text", title: "Brain", wide: true, body: "Provider order: " + ((b.order || []).join(" \u2192 ") || "none") +
+            "\nClaude: " + (b.claude_enabled ? "on (" + b.claude_model + ")" : "off") + "\nFish Audio: " + (b.fish_audio ? "on" : "off") +
+            (calls ? "" : "\nNo AI calls have been recorded yet.") });
+          var speech = calls ? "My brain handled " + calls + " calls this week with a " + rate + " percent success rate." : "I have no recorded AI calls yet.";
+          return { data: { title: "Brain status", panels: panels, sources: [] }, speech: speech, done: "Brain status ready" };
+        } });
+    }
+
+    /* Hooks: canvas, briefing, cited research, skills, brain status */
+    var PRE = "^(?:(?:please|hey|cora)[,\\s]+)*";
+    var TRIGGER = new RegExp(PRE + "(?:show me|visuali[sz]e|canvas|(?:build|make|give) me (?:a |an )?(?:canvas|dashboard|visual)(?: (?:of|on|about|for))?)[\\s,:-]*(.+)$", "i");
+    var T_BRIEF = new RegExp(PRE + "(?:good morning\\b.*|morning (?:briefing|digest|brief)\\b.*|(?:give me|read me|what'?s) (?:my |the )?(?:morning )?(?:briefing|digest)\\b.*|brief me\\b.*)$", "i");
+    var T_RESEARCH = new RegExp(PRE + "(?:deep research|research)\\s+(?:on |about |into )?(.{3,})$", "i");
+    var T_SKILL = new RegExp(PRE + "(?:use |run )?skill\\s+([a-z0-9-]{2,40})\\s*[:,-]\\s*([\\s\\S]+)$", "i");
+    var T_BRAIN = new RegExp(PRE + "(?:brain status|ai stats|how(?:'s| is) your brain|show (?:me )?(?:your )?brain)\\b", "i");
+    var SKIP = /\bmy (?:files?|memor(?:y|ies)|tasks?|notes?|screen|reminders?|workspace|projects?)\b|^(?:(?:please|hey|cora)[,\s]+)*show me how\b/i;
+    var baseRespond = window.respond;
+    window.respond = function (q, fromAlwaysListen) {
+      try {
+        var text = String(q == null ? "" : q).trim(), m, live = !!fromAlwaysListen;
+        if (getConversationMode() !== "builder") {
+          if ((m = text.match(T_SKILL))) return runSkill(m[1].toLowerCase(), m[2].trim(), live, text);
+          if (T_BRIEF.test(text)) return runBriefing(live, text);
+          if ((m = text.match(T_RESEARCH)) && m[1].trim().length >= 3 && !SKIP.test(text)) return runResearch(m[1].trim(), live, text);
+          if (T_BRAIN.test(text)) return runBrain(live, text);
+          if ((m = text.match(TRIGGER)) && m[1] && m[1].trim().length >= 2 && !SKIP.test(text)) return runCanvas(m[1].trim(), live, text);
+        }
+      } catch (e) { /* fall through to normal CORA */ }
+      return baseRespond.apply(this, arguments);
+    };
+
+    /* Buttons next to Send + thumbs feedback */
+    var form = document.getElementById("commandForm"), input = document.getElementById("commandInput"), mic = document.getElementById("micBtn");
+    if (form && input && mic) {
+      var mk = function (id, label, tip) { var b = E("button", "action", label); b.type = "button"; b.id = id; b.title = tip; form.insertBefore(b, mic); return b; };
+      mk("canvasBtn", "\u25E7 Canvas", "Build a visual canvas about what you typed").addEventListener("click", function () {
+        var t = input.value.trim();
+        if (t.length < 2) { toast("Type a topic first, then press Canvas."); return; }
+        input.value = ""; runCanvas(t, false, t);
+      });
+      mk("briefBtn", "\u25F7 Briefing", "Morning briefing from your tasks and news").addEventListener("click", function () { runBriefing(false, "Morning briefing"); });
+      mk("brainBtn", "\u25C8 Brain", "Speed and reliability of CORA's AI brain").addEventListener("click", function () { runBrain(false, "Brain status"); });
+    }
+    [[up, 1], [down, -1]].forEach(function (pair) {
+      pair[0].addEventListener("click", function () {
+        api("/feedback", "POST", { rating: pair[1] }).then(function () { toast("Thanks, I'll use that to improve."); }).catch(function () { toast("Could not save feedback."); });
+      });
+    });
+
+    /* ================= Fish Audio voice + audio-reactive orb ================= */
+    var baseSpeak = window.speak, fishOff = false, audioCtx = null, rafId = 0;
+    function ensureCtx() {
+      try {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        if (!audioCtx) audioCtx = new AC();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+      } catch (e) {}
+    }
+    ["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, ensureCtx, { passive: true }); });
+
+    function stopReactive() {
+      cancelAnimationFrame(rafId); rafId = 0;
+      var orb = document.querySelector(".core-orb");
+      if (orb) { orb.classList.remove("reactive"); orb.style.removeProperty("--vol"); }
+      document.querySelectorAll(".core-bars i").forEach(function (b) { b.style.height = ""; b.style.animation = ""; });
+    }
+
+    function startReactive(audio) {
+      // Only wire audio through Web Audio when the context is already running; otherwise skip the animation, never the sound.
+      if (reduce || !audioCtx || audioCtx.state !== "running") return;
+      try {
+        var source = audioCtx.createMediaElementSource(audio);
+        var analyser = audioCtx.createAnalyser(); analyser.fftSize = 64;
+        source.connect(analyser); analyser.connect(audioCtx.destination);
+        var data = new Uint8Array(analyser.frequencyBinCount);
+        var orb = document.querySelector(".core-orb"), barEls = document.querySelectorAll(".core-bars i");
+        if (orb) orb.classList.add("reactive");
+        barEls.forEach(function (b) { b.style.animation = "none"; });
+        (function tick() {
+          analyser.getByteFrequencyData(data);
+          var sum = 0; for (var i = 0; i < data.length; i++) sum += data[i];
+          var level = Math.min(1, sum / data.length / 150);
+          if (orb) orb.style.setProperty("--vol", level.toFixed(3));
+          barEls.forEach(function (b, k) { b.style.height = Math.max(4, (data[k % data.length] / 255) * 22) + "px"; });
+          rafId = requestAnimationFrame(tick);
+        })();
+      } catch (e) { stopReactive(); }
+    }
+
+    window.speak = function (text, onDone) {
+      if (typeof voiceRepliesEnabled === "undefined" || !voiceRepliesEnabled || fishOff) return baseSpeak(text, onDone);
+      stopSpeaking();
+      var run = ++coraSpeechRun, message = String(text).slice(0, 3000), completed = false;
+
+      function finish() {
+        if (run !== coraSpeechRun || completed) return;
+        completed = true; stopReactive();
+        if (coraAudioUrl) { URL.revokeObjectURL(coraAudioUrl); coraAudioUrl = null; }
+        coraAudio = null;
+        $("#voiceStatus").textContent = alwaysListeningEnabled
+          ? (conversationActive ? "CORA is ready for your next instruction." : "Listening for Hey.")
+          : "Voice replies are on.";
+        setCoreState(alwaysListeningEnabled ? "listening" : "idle");
+        if (typeof onDone === "function") onDone();
+      }
+      function fallback() {
+        if (run !== coraSpeechRun || completed) return;
+        stopReactive();
+        if (coraAudio) { try { coraAudio.pause(); } catch (e) {} coraAudio = null; }
+        if (coraAudioUrl) { URL.revokeObjectURL(coraAudioUrl); coraAudioUrl = null; }
+        baseSpeak(text, onDone);
+      }
+
+      setCoreState("thinking");
+      $("#voiceStatus").textContent = "CORA is preparing Fish Audio voice\u2026";
+      fetch(API_BASE + "/voice/fish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: message }) })
+        .then(function (r) {
+          if (r.status === 503) { fishOff = true; throw new Error("not configured"); }
+          if (!r.ok) throw new Error("fish unavailable");
+          return r.blob();
+        })
+        .then(function (blob) {
+          if (run !== coraSpeechRun) return;
+          coraAudioUrl = URL.createObjectURL(blob);
+          coraAudio = new Audio(coraAudioUrl);
+          coraAudio.onplay = function () {
+            if (run !== coraSpeechRun) return;
+            $("#voiceStatus").textContent = "CORA is speaking using Fish Audio.";
+            setCoreState("speaking");
+          };
+          coraAudio.onended = finish;
+          coraAudio.onerror = fallback;
+          startReactive(coraAudio);
+          return coraAudio.play();
+        })
+        .catch(function () { fallback(); });
+    };
+
+    var oldStop = window.stopSpeaking;
+    window.stopSpeaking = function () { stopReactive(); return oldStop.apply(this, arguments); };
+  } catch (err) {
+    console.warn("CORA Canvas add-on did not start; CORA is running as before.", err);
+  }
+})();
+</script>
 </body></html>
