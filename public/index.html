@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1b0b1c">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>CORA — Personal AI Dashboard</title>
 <style>
 :root{--cyan:#00d9ff;--blue:#168bff;--green:#36f5a0;--bg:#020914;--panel:rgba(5,22,42,.88);--line:rgba(0,207,255,.48);--muted:#8eafc8}
@@ -143,6 +148,54 @@ header{background:linear-gradient(90deg,rgba(15,7,23,.92),rgba(4,3,9,.88));borde
 
 #coraAuthGate{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 50% 40%,#06234a 0,#020914 65%,#01040a 100%)}#coraAuthCard{width:min(420px,100%);padding:26px;border:1px solid #00d9ff88;border-radius:18px;background:rgba(3,18,37,.96);box-shadow:0 0 45px #00bfff33;text-align:center}#coraAuthCard h1{letter-spacing:8px;color:#00d9ff;margin:0 0 6px}#coraAuthCard p{color:#9bb7c9;font-size:13px}#coraAuthCard input{width:100%;padding:13px;border:1px solid #087bb1;border-radius:8px;background:#031426;color:white;margin:12px 0}#coraAuthError{color:#ff9cae;min-height:20px;font-size:12px}#coraAuthGate[hidden]{display:none}
 
+
+/* CORA signature pink theme */
+#coraAuthCard{background:rgba(35,12,34,.96);border-color:#ff63c7;box-shadow:0 0 45px #ff63c733}
+#coraAuthCard h1{color:#ff63c7;text-shadow:0 0 14px #ff63c7}
+#coraAuthCard input{background:#1b0b1c;border-color:#b53c8d}
+#coraAuthCard button{background:linear-gradient(90deg,#a92d83,#ff70c9);color:#210b1d}
+:root{--cyan:#ff63c7;--blue:#e94aa9;--green:#ffb5e5;--bg:#100713;--panel:rgba(35,12,34,.91);--line:rgba(255,91,194,.48);--muted:#c9a9c4}
+body{background:radial-gradient(ellipse at 50% 45%,#42143a 0,#1b0b1c 43%,#09050c 100%);color:#fff0fa}
+header{background:linear-gradient(90deg,rgba(66,15,55,.94),rgba(22,9,24,.9));box-shadow:0 0 22px #ff4fba44}
+.panel{background:rgba(34,13,34,.9);box-shadow:inset 0 0 22px #ff54b918,0 0 18px #ff54b920}
+.navbtn,.quickbtn,.action,.voice-toggle,.wake-toggle{background:rgba(180,35,125,.13)}
+.navbtn:hover,.navbtn.active,.quickbtn:hover,.action:hover{background:#9c286344;box-shadow:0 0 12px #ff63c733}
+.globe{background:radial-gradient(circle at 35% 35%,#ffd4f0 0,#e65bb7 17%,#7a246b 43%,#230d2b 70%);border-color:#ff9bdd;box-shadow:0 0 22px #ff63c7,inset -24px -20px 45px #000b,inset 10px 8px 30px #ffd1ef88}
+.globe:before{background:repeating-linear-gradient(0deg,transparent 0 26px,#ffb6e555 27px 28px),repeating-linear-gradient(90deg,transparent 0 35px,#ff9ddd44 36px 37px)}
+.globe:after{border-color:#ffc0e888;box-shadow:0 0 35px #ff63c755}
+.orbit{border-color:#ff63c7;box-shadow:0 0 16px #ff63c7}.scan{border-color:#ff63c755}
+.core-orb{background:radial-gradient(circle at 36% 30%,#fff0fa 0,#ffb6e7 7%,#e34aa9 22%,#70245f 53%,#17091c 75%);border-color:#ffb5e5;box-shadow:0 0 22px var(--core-glow),0 0 65px rgba(255,80,190,.22),inset 0 0 34px #ffd1ef66,inset -20px -24px 45px #000c}
+.core-eye{border-color:#ffd5ef99;box-shadow:inset 0 0 24px #ff8bd566,0 0 22px #ff63c744}
+.core-eye:before{background:radial-gradient(circle,#fff 0,#ffd9f2 9%,#ff73c7 28%,#8b286f 67%,transparent 70%);box-shadow:0 0 18px #ffc3e9,0 0 44px #ff63c7}
+.command button,.primary{background:linear-gradient(90deg,#a92d83,#ff70c9);color:#210b1d}.bubble{background:#32132f;border-color:#a83d83}
+.live-console{border-color:#8c326f;background:radial-gradient(ellipse at 50% 0%,#4b1942 0,rgba(20,8,22,.96) 68%)}
+.live-node{border-color:#c44b9d;color:#ffd0ef;background:#32132f}.live-node.active{background:#63214f;box-shadow:0 0 20px #ff63c788}
+.live-link{background:linear-gradient(90deg,#a93482,#ff7bce,#a93482)}.live-meter i{background:linear-gradient(90deg,#e94aa9,#ff8bd5,#ffc1e8)}
+.source-board{border-color:#8c326f;background:rgba(23,8,23,.85)}.toast{background:#35132f;border-color:var(--cyan);box-shadow:0 0 20px #ff63c755}
+
+
+/* Command-first research workspace: no separate search action buttons. */
+.cora-search-line{display:flex;flex-direction:column;gap:7px;margin:8px 0 14px}
+.cora-search-line input{width:100%;min-width:0;padding:13px 15px;border-radius:12px;border:1px solid #a83d83;background:#160b19;color:#fff;font:inherit}
+#researchLiveStatus{font-size:11px;color:var(--muted)}
+.research-workspace{margin-top:12px;white-space:normal;min-height:100px}
+.research-tabbar{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:9px;margin-bottom:12px}
+.research-tabbar a{color:#ffd3f2;text-decoration:none;padding:8px 12px;border:1px solid #713366;border-radius:999px;font-size:12px}
+.research-tabbar a[aria-current="page"]{background:linear-gradient(100deg,#8e2678,#d84ca9);border-color:#ff8bdd;color:#fff}
+.research-tabpanel{display:none;gap:10px}
+.research-tabpanel.active{display:grid}
+.research-result{display:block;padding:12px;border:1px solid #713366;border-radius:11px;background:#160d1c;color:#ffe5f7;text-decoration:none}
+.research-result strong{display:block;color:#ffb5e9;margin-bottom:5px}
+.research-result small{display:block;color:#c8afc4;line-height:1.45}
+.research-video-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.research-video{border:1px solid #713366;border-radius:12px;overflow:hidden;background:#120b18}
+.research-video iframe{display:block;width:100%;aspect-ratio:16/9;border:0;background:#000}
+.research-video a{display:block;padding:9px 11px;color:#ffd3f2;text-decoration:none;font-size:13px}
+.research-empty{padding:14px;border:1px dashed #713366;border-radius:10px;color:var(--muted)}
+/* Enter or voice submits requests; keep only safety-critical and voice controls visible. */
+#commandForm>button[type="submit"]{display:none!important}
+#webSearchBtn,#webResearchBtn{display:none!important}
+
 </style>
 </head>
 <body>
@@ -177,7 +230,7 @@ header{background:linear-gradient(90deg,rgba(15,7,23,.92),rgba(4,3,9,.88));borde
  <section class="panel globe-wrap" aria-label="Reactive CORA holographic core">
   <div class="scan"></div><div class="orbit"></div>
   <div class="core-stage" id="coreStage" data-state="idle" role="status" aria-live="polite">
-   <div class="hud-window hud-left" id="hudActivity"><div class="hud-cap"><i></i> LIVE ACTIVITY <span>●</span></div><strong id="hudActivityTitle">SYSTEM STANDBY</strong><p id="hudActivityText">CORA is ready. Your workspace will come alive when a task begins.</p><div class="hud-line"><i></i></div></div>
+   <div class="hud-window hud-left" id="hudActivity"><div class="hud-cap"><i></i> LIVE ACTIVITY <span>●</span></div><strong id="hudActivityTitle">SYSTEM STANDBY</strong><p id="hudActivityText">I am ready. Your workspace will come alive when a task begins.</p><div class="hud-line"><i></i></div></div>
    <div class="hud-window hud-right" id="hudSources"><div class="hud-cap"><i></i> SOURCES / DATA <span>↗</span></div><div id="hudSourceContent">No external sources loaded.</div></div>
    <div class="hud-window hud-bottom-left" id="hudCompute"><div class="hud-cap"><i></i> CORE PROCESS <span>◈</span></div><strong id="hudComputeText">NEURAL CORE ONLINE</strong><div class="hud-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
    <div class="hud-window hud-code" id="hudCode"><div class="hud-cap"><i></i> CODE / BUILD PREVIEW <span>⌘</span></div><pre id="hudCodeText">Awaiting a Builder task…</pre></div>
@@ -208,7 +261,7 @@ header{background:linear-gradient(90deg,rgba(15,7,23,.92),rgba(4,3,9,.88));borde
   <h2>CORA Assistant</h2>
   <div class="assistant"><div class="avatar">◉</div><div class="bubble"><strong id="greeting">Hello.</strong><br><span id="welcome">Talk to me about your day, explore an idea, or switch to Builder when you want to work on a project.</span></div></div>
   <div class="chatlog" id="chatlog" aria-live="polite"><div class="chatline"><b>CORA:</b> Hello. I’m here and ready to talk, think things through, or help you build something.</div></div>
-  <form class="command" id="commandForm"><select id="conversationMode" aria-label="CORA conversation mode" title="Choose how CORA responds"><option value="auto">Auto</option><option value="companion">Companion</option><option value="builder">Builder</option></select><input id="commandInput" placeholder="Talk to CORA or ask it to build something…" autocomplete="off" aria-label="Talk to CORA or type a request"><button class="primary" type="submit">Send</button><button class="primary mic" type="button" id="micBtn" title="Toggle CORA voice session" aria-label="Toggle CORA voice session">🎙</button><button class="voice-toggle" type="button" id="voiceToggle" aria-pressed="false">🔇 Voice off</button><button class="action" type="button" id="stopSpeechBtn" title="Stop current speech">⏹ Stop speech</button><button class="wake-toggle" type="button" id="wakeToggle" aria-pressed="false">◎ Voice session: off</button></form><div class="voice-status" id="voiceStatus">Voice replies are off. Turn on the voice session, say “Hey” once, then speak naturally without repeating the wake word. Say “go to sleep” or press the voice button to end the session. Computer actions still ask for confirmation.</div>
+  <form class="command" id="commandForm"><select id="conversationMode" aria-label="CORA conversation mode" title="Choose how CORA responds"><option value="auto">Auto</option><option value="companion">Companion</option><option value="builder">Builder</option></select><input id="commandInput" placeholder="Talk to me or ask me to build something…" autocomplete="off" aria-label="Talk to CORA or type a request"><button class="primary" type="submit">Send</button><button class="primary mic" type="button" id="micBtn" title="Toggle CORA voice session" aria-label="Toggle CORA voice session">🎙</button><button class="voice-toggle" type="button" id="voiceToggle" aria-pressed="false">🔇 Voice off</button><button class="action" type="button" id="stopSpeechBtn" title="Stop current speech">⏹ Stop speech</button><button class="wake-toggle" type="button" id="wakeToggle" aria-pressed="false">◎ Voice session: off</button></form><div class="voice-status" id="voiceStatus">Voice replies are off. Turn on the voice session and say “CORA” to begin. Then speak naturally without repeating the wake word. Say “go to sleep” or press the voice button to end the session. Computer actions still ask for confirmation.</div>
   <details class="voice-settings" id="voiceSettings">
    <summary>◉ CORA VOICE STUDIO — British English / Deep &amp; Calm</summary>
    <div class="voice-settings-grid">
@@ -242,7 +295,7 @@ header{background:linear-gradient(90deg,rgba(15,7,23,.92),rgba(4,3,9,.88));borde
   
   <section class="panel" id="builderPanel">
    <h2>Builder Workspace</h2>
-   <p class="muted">CORA can prepare project files for review, apply changes only after confirmation, and store projects in its persistent cloud workspace.</p>
+   <p class="muted">I can prepare project files for review, apply changes only after confirmation, and store projects in its persistent cloud workspace.</p>
    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
     <input id="builderProject" maxlength="60" placeholder="Project name" style="flex:1;min-width:150px;padding:10px;border-radius:8px;border:1px solid var(--line);background:#090611;color:white">
     <button class="action" id="builderCreateBtn" type="button">＋ Create project</button>
@@ -280,12 +333,12 @@ header{background:linear-gradient(90deg,rgba(15,7,23,.92),rgba(4,3,9,.88));borde
 
   <section class="panel" id="researchPanel">
    <h2>Web Research</h2>
-   <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <input id="webQuery" placeholder="Search the web…" maxlength="300" style="flex:1;min-width:180px;padding:10px;border-radius:8px;border:1px solid var(--line);background:#04182d;color:white">
-    <button class="primary" id="webSearchBtn" type="button">Find links</button>
-    <button class="action" id="webResearchBtn" type="button">Research &amp; summarise</button>
-   </div>
-   <div id="webResults" class="muted" style="margin-top:10px;white-space:pre-wrap">Search links or a research summary will appear here.</div>
+   <p class="muted">Just ask CORA to search. Web pages, news and videos are gathered together automatically.</p>
+  <div class="cora-search-line">
+    <input id="webQuery" placeholder="Ask CORA to search the web, e.g. latest AI developments…" maxlength="300" aria-label="Search the web">
+    <span id="researchLiveStatus" role="status" aria-live="polite">Ready for your search</span>
+  </div>
+  <div id="webResults" class="research-workspace" aria-live="polite"><div class="source-empty">When you ask me to search, I will open Web, News and Videos views here at the same time.</div></div>
   </section>
 
   <section class="panel" id="documentPanel">
@@ -478,7 +531,7 @@ function setLiveWorkspace(stage = "ready", detail = "") {
     consoleEl.dataset.busy = String(busy);
     const states = {
         ready: ["CORA SYSTEM READY", "Ready for a conversation, research task or project.", 100],
-        complete: ["TASK COMPLETE", detail || "CORA has finished this step.", 100],
+        complete: ["TASK COMPLETE", detail || "I have finished this step.", 100],
         error: ["ATTENTION REQUIRED", detail || "CORA could not complete this step.", 0],
         search: ["SEARCHING KNOWLEDGE SOURCES", detail || "Retrieving search results…", 58],
         research: ["RESEARCH IN PROGRESS", detail || "Gathering and synthesising information…", 62],
@@ -631,7 +684,7 @@ async function generateBuilderFiles() {
     const project = builderProjectName();
     const prompt = ($("#builderPrompt").value || "").trim();
     if (!project || !prompt) { toast("Enter a project name and describe what to build."); return; }
-    setBuilderStatus("CORA is planning the project and preparing a file-by-file preview…");
+    setBuilderStatus("I am planning the project and preparing a file-by-file preview…");
     const response = await fetch(`${API_BASE}/builder/generate`, {
         method:"POST", headers:{"Content-Type":"application/json"},
         body:JSON.stringify({project, prompt})
@@ -645,7 +698,7 @@ async function applyBuilderPreview() {
     const project = builderProjectName();
     if (!builderPreviewFiles.length) return;
     const names = builderPreviewFiles.map(f => f.path).join("\\n");
-    if (!window.confirm(`CORA will write ${builderPreviewFiles.length} file(s) into "${project}". Existing files will be backed up. Continue?\\n\\n${names}`)) return;
+    if (!window.confirm(`I will write ${builderPreviewFiles.length} file(s) into "${project}". Existing files will be backed up. Continue?\\n\\n${names}`)) return;
     setBuilderStatus("Writing approved files and creating backups where needed…");
     const response = await fetch(`${API_BASE}/builder/apply`, {
         method:"POST", headers:{"Content-Type":"application/json"},
@@ -814,8 +867,8 @@ function speak(text, onDone) {
 
         $("#voiceStatus").textContent = alwaysListeningEnabled
             ? (conversationActive
-                ? "CORA is ready for your next instruction."
-                : "Listening for Hey.")
+                ? "I am ready for your next instruction."
+                : "Listening for CORA.")
             : "Voice replies are on.";
 
         setCoreState(alwaysListeningEnabled ? "listening" : "idle");
@@ -873,7 +926,7 @@ function speak(text, onDone) {
     async function playElevenLabs() {
         setCoreState("thinking");
         $("#voiceStatus").textContent =
-            "CORA is preparing ElevenLabs voice audio…";
+            "I am preparing ElevenLabs voice audio…";
 
         try {
             const response = await fetch(`${API_BASE}/voice/speak`, {
@@ -898,7 +951,7 @@ function speak(text, onDone) {
             coraAudio.onplay = () => {
                 if (run !== coraSpeechRun) return;
                 $("#voiceStatus").textContent =
-                    "CORA is speaking using ElevenLabs.";
+                    "I am speaking using ElevenLabs.";
                 setCoreState("speaking");
             };
 
@@ -960,7 +1013,7 @@ bindCoraVoiceStudio();
 $("#stopSpeechBtn").addEventListener("click", () => {
     stopSpeaking();
     $("#voiceStatus").textContent = alwaysListeningEnabled
-        ? (conversationActive ? "Speech stopped. CORA is still listening for your next instruction." : "Listening for Hey remains enabled.")
+        ? (conversationActive ? "Speech stopped. I am still listening for your next instruction." : "Listening for CORA remains enabled.")
         : (voiceRepliesEnabled ? "Speech stopped. The next reply can be spoken." : "Speech stopped.");
     toast("CORA speech stopped.");
 });
@@ -981,7 +1034,7 @@ function startAlwaysListener() {
     recognition.onstart = () => {
         $("#voiceStatus").textContent = conversationActive
             ? "Conversation active. Speak naturally; you do not need to say CORA each time."
-            : "Listening for “Hey” to begin a conversation.";
+            : "Listening for “CORA” to begin a conversation.";
         $("#micBtn").textContent = "🎙";
         setCoreState("listening");
     };
@@ -1001,13 +1054,13 @@ function startAlwaysListener() {
                 updateWakeButton();
                 processingVoiceRequest = true;
                 try { recognition.stop(); } catch (_) {}
-                speak("Voice session ended. Say Hey whenever you want to talk again.", () => restartAlwaysListener());
+                speak("Voice session ended. Say CORA whenever you want to talk again.", () => restartAlwaysListener());
                 return;
             }
 
             let spokenCommand = transcript;
             if (!conversationActive) {
-                const wakeMatch = transcript.match(/^hey(?:[\s,:-]+(.*))?$/i);
+                const wakeMatch = transcript.match(/^(?:hey[\s,:-]+)?cora(?:[\s,:-]+(.*))?$/i);
                 if (!wakeMatch) continue;
                 conversationActive = true;
                 updateWakeButton();
@@ -1114,11 +1167,20 @@ async function respond(q, fromAlwaysListen = false) {
         return;
     }
 
+    const searchIntent = message.match(/^(?:cora[, ]*)?(?:please\s+)?(?:search(?: the web| online)? for|look up|research|google|find (?:websites|articles|videos|information) about)\s+(.+)$/i);
+    if (searchIntent && getConversationMode() !== "builder") {
+        log("YOU", message);
+        log("CORA", "I'm searching web pages, news and videos together now.");
+        await runUnifiedSearch(searchIntent[1]);
+        if (fromAlwaysListen) restartAlwaysListener();
+        return;
+    }
+
     setCoreState("thinking");
     setLiveWorkspace(getConversationMode() === "builder" ? "building" : "thinking");
-    clearSources("CORA is preparing this request. Live project and research data will appear as tools return them.");
+    clearSources("I am preparing this request. Live project and research data will appear as tools return them.");
     log("YOU", message);
-    log("CORA", "Processing your request, Sir...");
+    log("CORA", "Processing your request...");
     const pending = $("#chatlog").lastElementChild;
 
     try {
@@ -1141,7 +1203,7 @@ async function respond(q, fromAlwaysListen = false) {
 
             if (commandData.confirmation_required && commandData.action) {
                 log("CORA", commandData.reply);
-                const approved = window.confirm(commandData.reply + "\n\nDo you approve this action, Sir?");
+                const approved = window.confirm(commandData.reply + "\n\nDo you approve this action, ?");
                 if (approved) {
                     log("CORA", "Authorization received. Carrying out the approved task…");
                     const executionResponse = await fetch(`${API_BASE}/execute`, {
@@ -1156,21 +1218,21 @@ async function respond(q, fromAlwaysListen = false) {
                     if (!executionResponse.ok) {
                         throw new Error(executionData.detail || "The action could not be completed.");
                     }
-                    log("CORA", executionData.reply || "Task completed, Sir.");
+                    log("CORA", executionData.reply || "Task completed.");
                     if (executionData.url) window.open(executionData.url, "_blank", "noopener,noreferrer");
-                    speak(executionData.reply || "Task completed, Sir.", () => {
+                    speak(executionData.reply || "Task completed.", () => {
                         if (fromAlwaysListen) restartAlwaysListener();
                     });
                 } else {
-                    log("CORA", "Understood, Sir. I have not carried out that action.");
-                    speak("Understood, Sir. I have not carried out that action.", () => {
+                    log("CORA", "Understood. I have not carried out that action.");
+                    speak("Understood. I have not carried out that action.", () => {
                         if (fromAlwaysListen) restartAlwaysListener();
                     });
                 }
                 return;
             }
 
-            let localReply = commandData.reply || "Task completed, Sir.";
+            let localReply = commandData.reply || "Task completed.";
             if (commandData.data) {
                 const d = commandData.data;
                 localReply += `\nOperating system: ${d.operating_system}\nComputer: ${d.computer_name}\nFree disk space: ${d.disk_free_gb ?? "Unavailable"} GB of ${d.disk_total_gb ?? "Unavailable"} GB`;
@@ -1201,7 +1263,7 @@ async function respond(q, fromAlwaysListen = false) {
         }
 
         pending.remove();
-        const reply = data.reply || "I received an empty response, Sir.";
+        const reply = data.reply || "I received an empty response.";
         updateHudCode(reply);
         setLiveWorkspace("complete", "Response ready. No external sources were requested for this chat.");
         log("CORA", reply);
@@ -1210,7 +1272,7 @@ async function respond(q, fromAlwaysListen = false) {
         });
     } catch (error) {
         if (pending.isConnected) pending.remove();
-        const errorMessage = "Apologies, Sir. " + error.message +
+        const errorMessage = "Apologies. " + error.message +
             ". Please check that the CORA backend is running on the cloud service.";
         setLiveWorkspace("error", error.message);
         log("CORA", errorMessage);
@@ -1269,10 +1331,10 @@ $("#wakeToggle").addEventListener("click", () => {
         $("#voiceToggle").setAttribute("aria-pressed", "true");
         $("#voiceToggle").textContent = "🔊 Voice on";
         $("#voiceStatus").textContent =
-            "Starting voice standby. Say Hey once, then speak naturally until you say go to sleep.";
+            "Starting voice standby. Say CORA, then speak naturally until you say go to sleep.";
         conversationActive = false;
         updateWakeButton();
-        toast("CORA is listening for Hey. After activation, speak naturally until you say go to sleep.");
+        toast("I am listening for CORA. After activation, speak naturally until you say go to sleep.");
         startAlwaysListener();
     } else {
         if (listenerRestartTimer) {
@@ -1466,7 +1528,7 @@ $("#analyzeScreenBtn").addEventListener("click", async () => {
         const question = $("#screenQuestion").value.trim() ||
             "Describe what is visible on my screen and tell me what I should know.";
         log("YOU", "Please analyse my shared screen: " + question);
-        log("CORA", "Analysing the screenshot, Sir…");
+        log("CORA", "Analysing the screenshot…");
 
         const response = await fetch(`${API_BASE}/vision/analyze`, {
             method: "POST",
@@ -1478,12 +1540,12 @@ $("#analyzeScreenBtn").addEventListener("click", async () => {
             throw new Error(data.detail || "Screen analysis request failed.");
         }
 
-        log("CORA", data.reply || "I could not analyse that screenshot, Sir.");
-        speak(data.reply || "I could not analyse that screenshot, Sir.");
+        log("CORA", data.reply || "I could not analyse that screenshot.");
+        speak(data.reply || "I could not analyse that screenshot.");
         setScreenStatus("Analysis complete. The screenshot was processed in memory and was not saved by this app.");
     } catch (error) {
-        log("CORA", "Apologies, Sir. " + error.message);
-        speak("Apologies, Sir. " + error.message);
+        log("CORA", "Apologies. " + error.message);
+        speak("Apologies. " + error.message);
         setScreenStatus("Analysis failed: " + error.message);
     } finally {
         button.disabled = !screenStream;
@@ -1604,56 +1666,98 @@ $("#addTaskBtn").addEventListener("click", async () => {
     } catch (error) { toast(error.message); }
 });
 
-async function runWebSearch() {
-    const query = $("#webQuery").value.trim();
-    if (!query) { toast("Enter a search query."); return; }
-    const host = $("#webResults"); host.textContent = "Searching…";
-    setLiveWorkspace("search", `Searching the web for: ${query}`);
-    clearSources("Searching. Source cards will populate when the search provider returns links.");
-    try {
-        const response = await fetch(`${API_BASE}/web/search?q=${encodeURIComponent(query)}`);
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.detail || "Search failed.");
-        host.replaceChildren();
-        renderSources(data.results || [], data.provider || "Web search");
-        setLiveWorkspace("complete", `Retrieved ${(data.results || []).length} search results for “${query}”.`);
-        data.results.forEach(result => {
-            const item = document.createElement("div"); item.style.margin = "10px 0";
-            const link = document.createElement("a"); link.href = result.url; link.target = "_blank";
-            link.rel = "noopener noreferrer"; link.textContent = result.title;
-            link.style.color = "var(--cyan)";
-            const snippet = document.createElement("p"); snippet.className = "muted";
-            snippet.textContent = result.snippet || result.url;
-            item.append(link, snippet); host.append(item);
-        });
-    } catch (error) { host.textContent = error.message; setLiveWorkspace("error", error.message); }
+function safeSearchLink(url) {
+    try { const parsed = new URL(url); return /^https?:$/.test(parsed.protocol) ? parsed.href : null; }
+    catch (_) { return null; }
 }
-$("#webSearchBtn").addEventListener("click", runWebSearch);
-$("#webQuery").addEventListener("keydown", e => { if (e.key === "Enter") runWebSearch(); });
-
-async function runWebResearch() {
-    const query = $("#webQuery").value.trim();
-    if (!query) { toast("Enter a research question first."); return; }
+function renderUnifiedResearch(data) {
     const host = $("#webResults");
-    const button = $("#webResearchBtn");
-    host.textContent = "CORA is searching the web and preparing a summary…";
-    setLiveWorkspace("research", `Researching: ${query}`);
-    clearSources("CORA's research provider has not returned a separate source list for this request. Source links will not be invented.");
-    button.disabled = true;
-    try {
-        const response = await fetch(`${API_BASE}/web/research?q=${encodeURIComponent(query)}`);
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.detail || "Web research failed.");
-        host.textContent = data.reply || "No research summary was returned.";
-        setLiveWorkspace("complete", `Research summary prepared for: ${query}`);
-        log("CORA", "Web research completed for: " + query);
-        speak(data.reply || "Research completed, Sir.");
-    } catch (error) {
-        host.textContent = error.message;
-        setLiveWorkspace("error", error.message);
-    } finally { button.disabled = false; }
+    host.replaceChildren();
+    const tabs = [
+        {id:"overview", label:"Overview"},
+        {id:"web", label:`Web (${(data.web||[]).length})`},
+        {id:"news", label:`News (${(data.news||[]).length})`},
+        {id:"videos", label:`Videos (${(data.videos||[]).length})`}
+    ];
+    const tabbar = document.createElement("nav"); tabbar.className = "research-tabbar"; tabbar.setAttribute("aria-label", "Research result tabs");
+    const panels = document.createElement("div");
+    tabs.forEach((tab, index) => {
+        const link = document.createElement("a"); link.href = `#research-${tab.id}`; link.textContent = tab.label;
+        link.dataset.researchTab = tab.id; if (index === 0) link.setAttribute("aria-current", "page");
+        tabbar.append(link);
+        const panel = document.createElement("section"); panel.className = "research-tabpanel" + (index === 0 ? " active" : "");
+        panel.id = `research-${tab.id}`; panel.dataset.researchPanel = tab.id;
+        panels.append(panel);
+    });
+    host.append(tabbar, panels);
+    const activate = id => {
+        tabbar.querySelectorAll("a").forEach(a => a.setAttribute("aria-current", a.dataset.researchTab === id ? "page" : "false"));
+        panels.querySelectorAll("section").forEach(p => p.classList.toggle("active", p.dataset.researchPanel === id));
+    };
+    tabbar.addEventListener("click", event => {
+        const link = event.target.closest("a[data-research-tab]"); if (!link) return;
+        event.preventDefault(); activate(link.dataset.researchTab);
+    });
+    const overview = panels.querySelector('[data-research-panel="overview"]');
+    const summary = document.createElement("div"); summary.className = "research-empty";
+    summary.textContent = `Search complete for “${data.query}”. I found ${(data.web||[]).length} web pages, ${(data.news||[]).length} news results and ${(data.videos||[]).length} videos. Choose a view above; all results were gathered together.`;
+    overview.append(summary);
+    for (const [key, rows] of [["web", data.web||[]], ["news", data.news||[]]]) {
+        const panel = panels.querySelector(`[data-research-panel="${key}"]`);
+        if (!rows.length) { const empty = document.createElement("div"); empty.className = "research-empty"; empty.textContent = "No results were returned for this view."; panel.append(empty); continue; }
+        rows.forEach((row, i) => {
+            const url = safeSearchLink(row.url); if (!url) return;
+            const card = document.createElement("a"); card.className = "research-result"; card.href = url; card.target = "_blank"; card.rel = "noopener noreferrer";
+            const title = document.createElement("strong"); title.textContent = `${i+1}. ${row.title || url}`;
+            const snippet = document.createElement("small"); snippet.textContent = row.snippet || url;
+            card.append(title, snippet); panel.append(card);
+        });
+    }
+    const videoPanel = panels.querySelector('[data-research-panel="videos"]');
+    const videoGrid = document.createElement("div"); videoGrid.className = "research-video-grid";
+    (data.videos||[]).forEach(video => {
+        const card = document.createElement("article"); card.className = "research-video";
+        if (/^[A-Za-z0-9_-]{11}$/.test(video.video_id || "")) {
+            const frame = document.createElement("iframe"); frame.src = `https://www.youtube-nocookie.com/embed/${video.video_id}`;
+            frame.title = video.title || "YouTube video"; frame.loading = "lazy"; frame.referrerPolicy = "strict-origin-when-cross-origin";
+            frame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"; frame.allowFullscreen = true;
+            card.append(frame);
+        }
+        const link = document.createElement("a"); link.href = safeSearchLink(video.url) || "#"; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = video.title || "Open video";
+        card.append(link); videoGrid.append(card);
+    });
+    if (!videoGrid.children.length) { const empty = document.createElement("div"); empty.className = "research-empty"; empty.textContent = "No embeddable YouTube videos were found for this search. The Web and News views are still available."; videoPanel.append(empty); }
+    else videoPanel.append(videoGrid);
+    renderSources(data.web || [], data.provider || "CORA unified search");
 }
-$("#webResearchBtn").addEventListener("click", runWebResearch);
+
+async function runUnifiedSearch(rawQuery) {
+    const query = String(rawQuery || "").trim().replace(/^(?:please\s+)?(?:search(?: the web| online)? for|look up|research|google)\s+/i, "").trim();
+    if (!query) return;
+    const host = $("#webResults");
+    $("#webQuery").value = query;
+    $("#researchLiveStatus").textContent = "Searching web pages, news and videos simultaneously…";
+    host.textContent = `Searching for “${query}” across web pages, news and video…`;
+    setLiveWorkspace("research", `Searching web, news and video together for: ${query}`);
+    clearSources("CORA is collecting web pages and video results simultaneously.");
+    try {
+        const response = await fetch(`${API_BASE}/web/unified-search?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Unified search failed.");
+        renderUnifiedResearch(data);
+        $("#researchLiveStatus").textContent = `Complete · ${(data.web||[]).length} web · ${(data.news||[]).length} news · ${(data.videos||[]).length} videos`;
+        setLiveWorkspace("complete", `Search complete: ${(data.web||[]).length} web pages, ${(data.news||[]).length} news results and ${(data.videos||[]).length} videos.`);
+        log("CORA", `I've finished searching for “${query}”. The Web, News and Videos tabs are ready.`);
+        speak(`I've finished searching for ${query}. I've organised the web results, news and videos into separate tabs.`);
+        $("#researchPanel").scrollIntoView({behavior:"smooth", block:"start"});
+    } catch (error) {
+        host.textContent = error.message; $("#researchLiveStatus").textContent = "Search could not be completed";
+        setLiveWorkspace("error", error.message);
+    }
+}
+async function runWebSearch() { return runUnifiedSearch($("#webQuery").value); }
+$("#webQuery").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); runUnifiedSearch(e.currentTarget.value); } });
+
 
 $("#analyseDocumentBtn").addEventListener("click", async () => {
     const file = $("#documentFile").files[0];
@@ -1684,7 +1788,7 @@ async function loadConversationHistory() {
         if (!response.ok) return;
         const host = $("#chatlog"); host.replaceChildren();
         if (!data.messages.length) {
-            log("CORA", "Good day, Sir. CORA is standing by.");
+            log("CORA", "Good day. I am standing by.");
             return;
         }
         data.messages.forEach(message => log(message.role === "user" ? "YOU" : "CORA", message.content));
@@ -1732,7 +1836,8 @@ window.addEventListener("pagehide", stopScreenShare);
 </script>
 <!-- ===================================================================
  CORA CANVAS + FISH AUDIO + REACTIVE ANIMATIONS
- Paste this whole block in public/index.html directly ABOVE the final </body></html>
+ Paste this whole block in public/index.html directly ABOVE the final <script>if("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("/sw.js").catch(()=>{});</script>
+</body></html>
  (after the existing </script>). Nothing else in the file needs to change.
  If anything fails, CORA falls back to exactly how it worked before.
 ==================================================================== -->
@@ -1934,7 +2039,7 @@ window.addEventListener("pagehide", stopScreenShare);
         if (pending && pending.isConnected) pending.remove();
         layer.classList.remove("open");
         setLiveWorkspace("error", error.message);
-        var msg = "Apologies, Sir. " + error.message;
+        var msg = "Apologies. " + error.message;
         log("CORA", msg);
         window.speak(msg, restart);
       }
@@ -1942,16 +2047,16 @@ window.addEventListener("pagehide", stopScreenShare);
     var speakable = function (t, n) { return String(t).replace(/\s*\[\d+\]/g, "").replace(/\s+/g, " ").trim().slice(0, n); };
 
     function runCanvas(topic, fromAlwaysListen, original) {
-      return runTask({ text: original || topic, working: "Building your canvas, Sir\u2026", core: "BUILDING CANVAS \u2022 RESEARCHING",
+      return runTask({ text: original || topic, working: "Building your canvas, \u2026", core: "BUILDING CANVAS \u2022 RESEARCHING",
         loading: "RESEARCHING \u2022 " + topic.slice(0, 60).toUpperCase(), fromAlwaysListen: fromAlwaysListen,
         run: async function () {
           var d = await api("/agents/canvas", "POST", { topic: topic });
-          var line = d.speech || "Your canvas is ready, Sir.";
+          var line = d.speech || "Your canvas is ready.";
           return { data: d, speech: line, done: "Canvas ready: " + (d.title || topic) };
         } });
     }
     function runBriefing(fromAlwaysListen, original) {
-      return runTask({ text: original || "Morning briefing", working: "Preparing your briefing, Sir\u2026", core: "MORNING BRIEFING",
+      return runTask({ text: original || "Morning briefing", working: "Preparing your briefing, \u2026", core: "MORNING BRIEFING",
         loading: "GATHERING TASKS AND NEWS", fromAlwaysListen: fromAlwaysListen,
         run: async function () {
           var d = await api("/agents/digest", "POST");
@@ -1960,7 +2065,7 @@ window.addEventListener("pagehide", stopScreenShare);
         } });
     }
     function runResearch(question, fromAlwaysListen, original) {
-      return runTask({ text: original || question, working: "Researching with cited sources, Sir\u2026", core: "CITED RESEARCH",
+      return runTask({ text: original || question, working: "Researching with cited sources, \u2026", core: "CITED RESEARCH",
         loading: "RESEARCHING \u2022 " + question.slice(0, 60).toUpperCase(), fromAlwaysListen: fromAlwaysListen,
         run: async function () {
           var d = await api("/agents/research", "POST", { question: question, depth: 2 });
@@ -1978,7 +2083,7 @@ window.addEventListener("pagehide", stopScreenShare);
         } });
     }
     function runBrain(fromAlwaysListen, original) {
-      return runTask({ text: original || "Brain status", working: "Checking my brain, Sir\u2026", core: "BRAIN STATUS",
+      return runTask({ text: original || "Brain status", working: "Checking my brain, \u2026", core: "BRAIN STATUS",
         loading: "READING TELEMETRY", fromAlwaysListen: fromAlwaysListen,
         run: async function () {
           var d = await api("/ai/stats?days=7", "GET");
@@ -2093,7 +2198,7 @@ window.addEventListener("pagehide", stopScreenShare);
         if (coraAudioUrl) { URL.revokeObjectURL(coraAudioUrl); coraAudioUrl = null; }
         coraAudio = null;
         $("#voiceStatus").textContent = alwaysListeningEnabled
-          ? (conversationActive ? "CORA is ready for your next instruction." : "Listening for Hey.")
+          ? (conversationActive ? "I am ready for your next instruction." : "Listening for CORA.")
           : "Voice replies are on.";
         setCoreState(alwaysListeningEnabled ? "listening" : "idle");
         if (typeof onDone === "function") onDone();
@@ -2107,7 +2212,7 @@ window.addEventListener("pagehide", stopScreenShare);
       }
 
       setCoreState("thinking");
-      $("#voiceStatus").textContent = "CORA is preparing Fish Audio voice\u2026";
+      $("#voiceStatus").textContent = "I am preparing Fish Audio voice\u2026";
       fetch(API_BASE + "/voice/fish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: message }) })
         .then(function (r) {
           if (r.status === 503) { fishOff = true; throw new Error("not configured"); }
@@ -2120,7 +2225,7 @@ window.addEventListener("pagehide", stopScreenShare);
           coraAudio = new Audio(coraAudioUrl);
           coraAudio.onplay = function () {
             if (run !== coraSpeechRun) return;
-            $("#voiceStatus").textContent = "CORA is speaking using Fish Audio.";
+            $("#voiceStatus").textContent = "I am speaking using Fish Audio.";
             setCoreState("speaking");
           };
           coraAudio.onended = finish;
@@ -2134,8 +2239,9 @@ window.addEventListener("pagehide", stopScreenShare);
     var oldStop = window.stopSpeaking;
     window.stopSpeaking = function () { stopReactive(); return oldStop.apply(this, arguments); };
   } catch (err) {
-    console.warn("CORA Canvas add-on did not start; CORA is running as before.", err);
+    console.warn("CORA Canvas add-on did not start; I am running as before.", err);
   }
 })();
 </script>
+<script>if("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("/sw.js").catch(()=>{});</script>
 </body></html>
