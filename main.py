@@ -12,6 +12,7 @@ import platform
 import ipaddress
 import shutil
 import subprocess
+import html
 import webbrowser
 from groq import Groq
 from contextlib import contextmanager
@@ -43,6 +44,8 @@ import cora_knowledge
 import cora_brain_versions
 import cora_evaluation
 import cora_model_adapters
+import cora_integrations
+import cora_connectors
 import cora_learning
 import research_workspace
 
@@ -414,7 +417,7 @@ if not (os.getenv("VERCEL") == "1" and not DATABASE_URL):
 
 @app.middleware("http")
 async def protect_cloud_api(request: Request, call_next):
-    if not CLOUD_MODE or request.url.path in {"/", "/index.html", "/brain.html", "/auth/login", "/health", "/favicon.ico"}:
+    if not CLOUD_MODE or request.url.path in {"/", "/index.html", "/brain.html", "/manifest.webmanifest", "/sw.js", "/auth/login", "/health", "/favicon.ico"} or request.url.path.startswith("/icons/"):
         return await call_next(request)
     if not ACCESS_PASSWORD:
         return JSONResponse(status_code=503, content={"detail": "CORA_ACCESS_PASSWORD is not configured in Vercel."})
@@ -825,7 +828,7 @@ def plan_local_command(message):
     if match:
         app_name = match.group(1)
         if CLOUD_MODE:
-            return {"handled": True, "reply": f"CORA is hosted in the cloud and cannot launch {app_name} on your iPhone or laptop. Please open that app directly on your device."}
+            return {"handled": True, "reply": f"I am hosted in the cloud and cannot launch {app_name} on your iPhone or laptop. Please open that app directly on your device."}
         return {"handled": True, "confirmation_required": True, "reply": f"Shall I open {app_name.title()}?", "action": {"type": "open_app", "app": app_name}}
 
     return {"handled": False}
@@ -1132,7 +1135,7 @@ def voice_speak(request: VoiceRequest):
 @app.get("/ai/status")
 def ai_status():
     providers = configured_ai_providers()
-    return {"mode": "automatic", "priority": providers, "configured_count": len(providers), "message": ("CORA will automatically fail over between configured providers." if providers else "No AI providers configured."), "session_secret_configured": len(SESSION_SECRET) >= 32}
+    return {"mode": "automatic", "priority": providers, "configured_count": len(providers), "message": ("I will automatically fail over between configured providers." if providers else "No AI providers configured."), "session_secret_configured": len(SESSION_SECRET) >= 32}
 
 
 @app.post("/auth/login")
@@ -1474,7 +1477,7 @@ def execute_action(request: ExecuteRequest):
     action_type = action.get("type")
 
     if action_type == "open_app":
-        if CLOUD_MODE: raise HTTPException(status_code=409, detail="CORA is running in the cloud and cannot open apps on your laptop. Use your device directly for this action.")
+        if CLOUD_MODE: raise HTTPException(status_code=409, detail="I am running in the cloud and cannot open apps on your laptop. Use your device directly for this action.")
         reply = launch_app(str(action.get("app", "")))
         save_history("assistant", reply)
         return {"success": True, "reply": reply}
@@ -2386,6 +2389,75 @@ def web_search_fixed(q: str):
     return {"query": query, "results": results, "provider": "DuckDuckGo HTML"}
 
 
+@app.get("/web/unified-search")
+def web_unified_search(q: str):
+    """Search web pages, news, and YouTube videos concurrently for CORA's tabbed workspace."""
+    query = (q or "").strip()
+    if not query or len(query) > 300:
+        raise HTTPException(status_code=400, detail="Enter a search query of up to 300 characters.")
+
+    def web_lookup():
+        return _cv_search(query, 10)
+
+    def news_lookup():
+        return _cv_search(query + " news", 8)
+
+    def video_lookup():
+        return _cv_search("site:youtube.com/watch " + query, 10)
+
+    try:
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            web_future = pool.submit(web_lookup)
+            news_future = pool.submit(news_lookup)
+            video_future = pool.submit(video_lookup)
+            web_results = web_future.result() or []
+            news_results = news_future.result() or []
+            raw_videos = video_future.result() or []
+    except Exception as error:
+        print("UNIFIED SEARCH ERROR:", type(error).__name__, str(error)[:240])
+        raise HTTPException(status_code=502, detail="CORA could not complete the web and video searches. Try again shortly.")
+
+    def clean_rows(rows, limit=10):
+        cleaned, seen = [], set()
+        for row in rows:
+            url = str(row.get("url") or "")
+            parsed = urlparse(url)
+            if parsed.scheme not in ("http", "https") or not parsed.hostname:
+                continue
+            if parsed.hostname.lower() in {"localhost", "127.0.0.1", "::1"}:
+                continue
+            if url in seen:
+                continue
+            seen.add(url)
+            cleaned.append({"title": str(row.get("title") or parsed.hostname)[:240],
+                            "url": url, "snippet": str(row.get("snippet") or "")[:1200]})
+            if len(cleaned) >= limit:
+                break
+        return cleaned
+
+    web_rows = clean_rows(web_results, 10)
+    news_rows = clean_rows(news_results, 8)
+    videos = []
+    for row in raw_videos:
+        url = str(row.get("url") or "")
+        parsed = urlparse(url)
+        host = (parsed.hostname or "").lower()
+        if host not in {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "www.youtu.be"}:
+            continue
+        video_id = (parse_qs(parsed.query).get("v") or [""])[0] if "youtu.be" not in host else parsed.path.strip("/").split("/")[0]
+        if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id or ""):
+            continue
+        videos.append({"title": str(row.get("title") or "YouTube video")[:240],
+                       "url": url, "video_id": video_id,
+                       "embed_url": "https://www.youtube-nocookie.com/embed/" + video_id,
+                       "snippet": str(row.get("snippet") or "")[:800]})
+        if len(videos) >= 8:
+            break
+
+    return {"query": query, "web": web_rows, "news": news_rows, "videos": videos,
+            "provider": "DuckDuckGo HTML", "completed": True}
+
+
 def _x_gather_sources(question, depth):
     """Plan queries, search, read pages. Returns (queries, sources, numbered source blocks)."""
     started = time.time()
@@ -2836,14 +2908,14 @@ def _get_brain():
 def _get_research_workspace():
     global _research_workspace
     if _research_workspace is None:
-        # Vercel's /tmp is ephemeral; local deployments keep this beside the app.
+        # Use PostgreSQL in cloud deployments when configured; /tmp remains a local fallback only.
         db_path = "/tmp/cora_research.sqlite" if CLOUD_MODE else str(BASE_DIR / "cora_research.sqlite")
         def search_fn(query):
             return _cv_search(query, 8)
         def video_fn(query):
             rows = _cv_search("site:youtube.com/watch " + query, 8)
             return [r for r in rows if "youtube.com/watch" in (r.get("url") or "") or "youtu.be/" in (r.get("url") or "")]
-        _research_workspace = research_workspace.ResearchWorkspace(db_path, search_fn, video_fn)
+        _research_workspace = research_workspace.ResearchWorkspace(db_path, search_fn, video_fn, postgres_dsn=DATABASE_URL if DATABASE_URL else None)
     return _research_workspace
 
 
@@ -2877,9 +2949,30 @@ class BrainResearchRequest(BaseModel):
     title: str | None = Field(default=None, max_length=200)
 
 
+@app.get("/integrations/status")
+def integrations_status(_owner=Depends(_brain_require_owner)):
+    """Return integration readiness without exposing credentials or claiming live connectivity."""
+    return cora_integrations.integration_status()
+
+
 @app.get("/brain.html", include_in_schema=False)
 def brain_dashboard_file():
     return FileResponse(BASE_DIR / "public" / "brain.html")
+
+@app.get("/manifest.webmanifest", include_in_schema=False)
+def pwa_manifest_file():
+    return FileResponse(BASE_DIR / "public" / "manifest.webmanifest", media_type="application/manifest+json")
+
+@app.get("/sw.js", include_in_schema=False)
+def pwa_service_worker_file():
+    return FileResponse(BASE_DIR / "public" / "sw.js", media_type="application/javascript", headers={"Cache-Control": "no-cache"})
+
+@app.get("/icons/{icon_name}", include_in_schema=False)
+def pwa_icon_file(icon_name: str):
+    allowed = {"cora-192.png", "cora-512.png", "apple-touch-icon.png"}
+    if icon_name not in allowed:
+        raise HTTPException(status_code=404, detail="Icon not found.")
+    return FileResponse(BASE_DIR / "public" / "icons" / icon_name, media_type="image/png")
 
 @app.get("/brain/overview")
 def brain_overview(_owner=Depends(_brain_require_owner)):
@@ -3019,3 +3112,183 @@ def brain_research_detail(session_id: str, _owner=Depends(_brain_require_owner))
     except KeyError:
         raise HTTPException(status_code=404, detail="Research session not found.")
 
+
+# ======================================================================
+# APPROVED CONNECTOR ACTIONS + AUDIT TRAIL
+# External actions are never performed from model output alone. The owner
+# must explicitly submit confirmed=true for each individual action.
+# ======================================================================
+class HomeAssistantActionRequest(BaseModel):
+    domain: str = Field(min_length=1, max_length=20)
+    service: str = Field(min_length=1, max_length=20)
+    entity_id: str = Field(min_length=3, max_length=100)
+    confirmed: bool = False
+
+class WhatsAppSendRequest(BaseModel):
+    to: str = Field(min_length=9, max_length=16)
+    message: str = Field(min_length=1, max_length=4000)
+    confirmed: bool = False
+
+class EmailSendRequest(BaseModel):
+    to: str = Field(min_length=5, max_length=320)
+    subject: str = Field(min_length=1, max_length=200)
+    body: str = Field(min_length=1, max_length=12000)
+    confirmed: bool = False
+
+def _ensure_action_audit():
+    pk = "BIGSERIAL PRIMARY KEY" if CLOUD_MODE else "INTEGER PRIMARY KEY AUTOINCREMENT"
+    with get_connection() as conn:
+        conn.execute(f"CREATE TABLE IF NOT EXISTS cora_action_audit (id {pk}, created_at TEXT NOT NULL, action TEXT NOT NULL, target TEXT NOT NULL DEFAULT '', outcome TEXT NOT NULL, detail TEXT NOT NULL DEFAULT '')")
+
+def _record_action(action, target, outcome, detail=""):
+    _ensure_action_audit()
+    with get_connection() as conn:
+        conn.execute("INSERT INTO cora_action_audit (created_at, action, target, outcome, detail) VALUES (?,?,?,?,?)",
+                     (datetime.utcnow().isoformat(timespec="seconds") + "Z", str(action)[:80], str(target)[:160], str(outcome)[:40], str(detail)[:500]))
+
+@app.get("/operations/audit")
+def operations_audit(limit: int = 50, _owner=Depends(_brain_require_owner)):
+    _ensure_action_audit()
+    with get_connection() as conn:
+        rows = conn.execute("SELECT id, created_at, action, target, outcome, detail FROM cora_action_audit ORDER BY id DESC LIMIT ?", (max(1, min(limit, 100)),)).fetchall()
+    return {"items": [{"id": r[0], "created_at": r[1], "action": r[2], "target": r[3], "outcome": r[4], "detail": r[5]} for r in rows]}
+
+@app.get("/connectors/home-assistant/states")
+def connector_home_assistant_states(_owner=Depends(_brain_require_owner)):
+    try:
+        states = cora_connectors.home_assistant_state()
+        _record_action("home_assistant.read_states", "configured_instance", "success", f"Returned {len(states)} states")
+        return {"items": states}
+    except cora_connectors.ConnectorError as error:
+        _record_action("home_assistant.read_states", "configured_instance", "failed", str(error))
+        raise HTTPException(status_code=502, detail=str(error))
+
+@app.post("/connectors/home-assistant/service")
+def connector_home_assistant_service(payload: HomeAssistantActionRequest, _owner=Depends(_brain_require_owner)):
+    target = payload.entity_id
+    if not payload.confirmed:
+        raise HTTPException(status_code=428, detail="Explicit confirmation is required before changing a device.")
+    try:
+        result = cora_connectors.home_assistant_service(payload.domain, payload.service, payload.entity_id)
+        _record_action("home_assistant." + payload.domain + "." + payload.service, target, "success", "Owner-confirmed action")
+        return {"success": True, "result": result}
+    except cora_connectors.ConnectorError as error:
+        _record_action("home_assistant." + payload.domain + "." + payload.service, target, "failed", str(error))
+        raise HTTPException(status_code=502, detail=str(error))
+
+@app.post("/connectors/whatsapp/send")
+def connector_whatsapp_send(payload: WhatsAppSendRequest, _owner=Depends(_brain_require_owner)):
+    if not payload.confirmed:
+        raise HTTPException(status_code=428, detail="Explicit confirmation is required before sending a WhatsApp message.")
+    try:
+        result = cora_connectors.whatsapp_send_text(payload.to, payload.message)
+        masked = payload.to[:3] + "••••" + payload.to[-3:]
+        _record_action("whatsapp.send_text", masked, "success", "Owner-confirmed message; content intentionally not retained")
+        return {"success": True, "provider": "WhatsApp Business Cloud API", "result": result}
+    except cora_connectors.ConnectorError as error:
+        masked = (payload.to[:3] + "••••" + payload.to[-3:]) if len(payload.to) >= 6 else "redacted"
+        _record_action("whatsapp.send_text", masked, "failed", str(error))
+        raise HTTPException(status_code=502, detail=str(error))
+
+
+@app.get("/connectors/email/recent")
+def connector_email_recent(limit: int = 10, _owner=Depends(_brain_require_owner)):
+    try:
+        items = cora_connectors.gmail_recent_messages(limit)
+        _record_action("gmail.read_recent_metadata", "inbox", "success", f"Returned {len(items)} message summaries")
+        return {"items": items}
+    except cora_connectors.ConnectorError as error:
+        _record_action("gmail.read_recent_metadata", "inbox", "failed", str(error))
+        raise HTTPException(status_code=502, detail=str(error))
+
+@app.post("/connectors/email/send")
+def connector_email_send(payload: EmailSendRequest, _owner=Depends(_brain_require_owner)):
+    if not payload.confirmed:
+        raise HTTPException(status_code=428, detail="Explicit confirmation is required before sending an email.")
+    try:
+        result = cora_connectors.gmail_send_message(payload.to, payload.subject, payload.body)
+        masked = payload.to[:2] + "••••" + payload.to.split("@")[-1]
+        _record_action("gmail.send_email", masked, "success", "Owner-confirmed email; body intentionally not retained")
+        return {"success": True, "provider": "Gmail API", "message_id": result.get("id")}
+    except cora_connectors.ConnectorError as error:
+        masked = payload.to[:2] + "••••" + payload.to.split("@")[-1] if "@" in payload.to else "redacted"
+        _record_action("gmail.send_email", masked, "failed", str(error))
+        raise HTTPException(status_code=502, detail=str(error))
+
+def _twilio_webhook_config():
+    auth_token = os.getenv("TWILIO_AUTH_TOKEN", "").strip()
+    base_url = os.getenv("TWILIO_WEBHOOK_BASE_URL", "").strip().rstrip("/")
+    parsed = urlparse(base_url)
+    if (not auth_token or not base_url or not os.getenv("TWILIO_ACCOUNT_SID", "").strip()
+            or not os.getenv("TWILIO_PHONE_NUMBER", "").strip() or parsed.scheme != "https"
+            or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment
+            or parsed.path not in ("", "/")):
+        raise HTTPException(status_code=503, detail="Twilio requires account credentials, a phone number and a public HTTPS origin in TWILIO_WEBHOOK_BASE_URL.")
+    return auth_token, base_url
+
+@app.post("/webhooks/twilio/voice", include_in_schema=False)
+async def twilio_voice_webhook(request: Request):
+    """A short, disclosure-first receptionist flow. Twilio signature is mandatory."""
+    auth_token, base_url = _twilio_webhook_config()
+    form = await request.form()
+    params = {str(k): str(v) for k, v in form.items()}
+    canonical_url = base_url + "/webhooks/twilio/voice"
+    signature = request.headers.get("X-Twilio-Signature", "")
+    if not cora_connectors.validate_twilio_signature(canonical_url, params, signature, auth_token):
+        raise HTTPException(status_code=403, detail="Invalid telephony webhook signature.")
+    action_url = html.escape(base_url + "/webhooks/twilio/voice/respond?turn=1", quote=True)
+    twiml = ('<?xml version="1.0" encoding="UTF-8"?><Response>'
+             '<Say language="en-GB">Hello. I am CORA, an AI receptionist. This call may be processed to respond to your request. Please do not share passwords or sensitive financial information.</Say>'
+             f'<Gather input="speech" action="{action_url}" method="POST" language="en-GB" speechTimeout="auto" timeout="5">'
+             '<Say language="en-GB">How may I help you today?</Say></Gather>'
+             '<Say language="en-GB">I did not hear a response. Goodbye.</Say></Response>')
+    return Response(content=twiml, media_type="application/xml")
+
+@app.post("/webhooks/twilio/voice/respond", include_in_schema=False)
+async def twilio_voice_respond(request: Request):
+    auth_token, base_url = _twilio_webhook_config()
+    form = await request.form()
+    params = {str(k): str(v) for k, v in form.items()}
+    try:
+        turn = max(1, min(int(request.query_params.get("turn", "1")), 3))
+    except ValueError:
+        turn = 1
+    canonical_url = base_url + "/webhooks/twilio/voice/respond?turn=" + str(turn)
+    signature = request.headers.get("X-Twilio-Signature", "")
+    if not cora_connectors.validate_twilio_signature(canonical_url, params, signature, auth_token):
+        raise HTTPException(status_code=403, detail="Invalid telephony webhook signature.")
+    transcript = str(params.get("SpeechResult", "")).strip()[:1200]
+    if not transcript:
+        response_text = "I did not catch that. Please call again if you still need help."
+        next_turn = 4
+    elif not has_ai_provider():
+        response_text = "I am not connected to my language service at the moment. Please leave a message through the usual contact channel."
+        next_turn = 4
+    else:
+        try:
+            response_text = _x_llm(
+                "You are CORA, a concise AI phone receptionist. You must identify as an AI, never claim to be a human, never collect passwords, payment card details, or security codes, and never promise bookings or actions you cannot verify. Ask one brief clarifying question when needed. Keep spoken replies under 55 words.",
+                "Caller said: " + transcript,
+                max_tokens=140, temperature=0.25)
+        except Exception:
+            response_text = "I am having trouble processing that request. Please try again later."
+            next_turn = 4
+        else:
+            next_turn = turn + 1
+    safe_text = html.escape(str(response_text)[:700])
+    if next_turn <= 3:
+        action_url = html.escape(base_url + "/webhooks/twilio/voice/respond?turn=" + str(next_turn), quote=True)
+        twiml = ('<?xml version="1.0" encoding="UTF-8"?><Response>'
+                 f'<Say language="en-GB">{safe_text}</Say>'
+                 f'<Gather input="speech" action="{action_url}" method="POST" language="en-GB" speechTimeout="auto" timeout="5">'
+                 '<Say language="en-GB">Is there anything else I can help with?</Say></Gather>'
+                 '<Say language="en-GB">Thank you for calling. Goodbye.</Say></Response>')
+    else:
+        twiml = ('<?xml version="1.0" encoding="UTF-8"?><Response>'
+                 f'<Say language="en-GB">{safe_text} Thank you for calling. Goodbye.</Say></Response>')
+    # No call audio or raw transcript is persisted.
+    try:
+        _record_action("twilio.receptionist_turn", "inbound_call", "success", "Speech handled; transcript and audio not retained")
+    except Exception:
+        pass  # A logging outage must not prevent the caller receiving the receptionist response.
+    return Response(content=twiml, media_type="application/xml")
