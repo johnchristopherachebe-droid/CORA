@@ -62,8 +62,22 @@ assert len(research["payload"]["videos"]) == 1
 
 # Ensure the integrated endpoints are registered and the dashboard is served.
 paths = {getattr(r, "path", "") for r in main.app.routes}
-for path in ("/brain/overview", "/brain/answer", "/brain/learn", "/brain/knowledge", "/brain/proposals", "/brain/versions", "/brain/research", "/brain.html"):
+for path in ("/brain/overview", "/brain/answer", "/brain/learn", "/brain/knowledge", "/brain/proposals", "/brain/versions", "/brain/research", "/brain.html", "/connectors/whatsapp/send", "/connectors/home-assistant/service", "/operations/audit"):
     assert path in paths, path
+# Connector actions require an explicit per-action confirmation and are audited.
+from fastapi import HTTPException
+try:
+    main.connector_whatsapp_send(main.WhatsAppSendRequest(to="+2348012345678", message="Hello", confirmed=False), "owner")
+    raise AssertionError("Unconfirmed WhatsApp send was accepted")
+except HTTPException as exc:
+    assert exc.status_code == 428
+main.cora_connectors.whatsapp_send_text = lambda to, message: {"messages": [{"id": "test-id"}]}
+sent = main.connector_whatsapp_send(main.WhatsAppSendRequest(to="+2348012345678", message="Hello", confirmed=True), "owner")
+assert sent["success"] is True
+audit = main.operations_audit(10, "owner")["items"]
+assert audit and audit[0]["action"] == "whatsapp.send_text"
+assert "Hello" not in repr(audit)
+
 print("BRAIN API INTEGRATION PASS")
 try: os.unlink(tmp.name)
 except OSError: pass
