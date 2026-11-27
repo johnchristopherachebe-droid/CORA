@@ -102,3 +102,37 @@ py -m uvicorn main:app --reload --port 8001
 Open `http://127.0.0.1:8001/`.
 
 Do not commit `.env` to GitHub.
+
+## Brain Control Centre (integrated)
+
+Open `/brain.html` after signing in to the main dashboard. It provides the integrated Brain overview, independent-answer mode, source/video research tabs, knowledge review, learning runs, proposal testing/approval, version history/rollback and evaluation.
+
+The Brain API is protected by the same signed CORA session and requires `CORA_ACCESS_PASSWORD` (16+ characters) and `SESSION_SECRET` (32+ characters):
+
+- `GET /brain/overview`, `POST /brain/answer`
+- `POST /brain/learn`, `POST /brain/teach`
+- `GET /brain/knowledge`, `GET /brain/knowledge/{id}`
+- `GET /brain/proposals`, `POST /brain/proposals/{id}/test|approve|reject`
+- `GET /brain/versions`, `POST /brain/versions/{id}/rollback`
+- `GET|POST /brain/evaluation/questions`, `POST /brain/evaluation/run`
+- `GET /brain/audit`, `POST /brain/consolidate/preview|apply`
+- `GET|POST /brain/research`, `GET /brain/research/{session_id}`
+
+The Brain Foundation is a versioned knowledge system, not a trained replacement language model. It can use configured providers as teachers, but their responses remain untrusted candidates until reviewed and promoted. Its independent reasoning and benchmark scoring are heuristic/lexical, not equivalent to a frontier model. Research sessions use an ephemeral SQLite store on Vercel (`/tmp`), so their history is not durable across serverless instance replacement. Video discovery is a YouTube-filtered public search result, not a guaranteed video transcript or quality check.
+
+### Self-upgrade safety
+
+The `upgrade_manager.py` module is included as an isolated-workspace proposal framework. It is deliberately **not connected to a production-code apply endpoint**. CORA can be extended to prepare diffs and run sandboxed tests, but production code must not be overwritten by a model response or by a client-supplied `approved=true` flag. This release does not claim autonomous self-modification or deployment.
+
+### Tests
+
+Run from the project root:
+
+```bash
+python -m py_compile main.py cora_*.py research_workspace.py
+python tests/test_phase1_modules.py
+python tests/test_phase1_integration.py
+python tests/test_brain_foundation.py
+python tests/test_extensions.py
+python tests/test_brain_api.py
+```

@@ -1,13 +1,25 @@
-# CORA Phase 1 validation report
+# CORA integration validation report — 27 November 2026
 
-## What was run
-- `python -m py_compile` on `main.py` and the three new modules: PASS.
-- `tests/test_phase1_modules.py` (real SQLite, fake AI): memory categories, migration of an old table, duplicate and secret refusal, persona prompt, plan -> act -> verify -> report, unknown tools dropped from plans, error recovery (retry with a changed input), failure -> needs_attention -> resume, sticky cancel and emergency stop, time-budget pause/resume, double-start protection, chat-intent heuristics: PASS.
-- `tests/test_phase1_integration.py` (the real `main.py` imported with stand-ins for FastAPI/pydantic and a fake AI): old database upgraded without losing memories, chat memory commands, persona and grouped memory in the chat prompt, multi-step request through `/chat`, task REST handlers, memory REST handlers, `SESSION_SECRET` token signing and rejection of password-signed tokens: PASS.
-- Search for the word "Sir" in replies and prompts: only "never call the user 'Sir'" instructions remain.
+## Tests run in the build workspace
 
-## Not tested (needs your accounts or real services)
-- Real FastAPI HTTP routing and request validation (stand-ins were used, so pydantic length limits were not exercised).
-- Real PostgreSQL (the migration uses `ADD COLUMN IF NOT EXISTS` and `RETURNING id`; both are standard but unrun here).
-- Real AI providers: the planner and verifier depend on the model returning valid JSON. Weak models may plan poorly; failures fall back to a single "draft" step.
-- Live web research, Vercel's 60-second limit under real latency, and the dashboard (not changed in this phase).
+- Python compilation of `main.py`, root Brain modules, package modules, and test files: PASS.
+- `tests/test_phase1_modules.py`: PASS — structured memory, persona, agent plan/act/verify/report, recovery, pause/resume and cancellation checks.
+- `tests/test_phase1_integration.py`: PASS — existing API integration harness, database migration, chat/memory/agent routes and signed session checks.
+- `tests/test_brain_foundation.py`: PASS — all 20 Brain Foundation check groups, including independent skills, candidate learning, provenance, injection screening, versioned approval, rollback, evaluation and audit.
+- `tests/test_extensions.py`: PASS — owner approval primitives, isolated upgrade proposal safeguards, research URL filtering and local model URL checks.
+- `tests/test_brain_api.py`: PASS — integrated Brain initialisation, owner-session guard, benchmark-required approval, research source/video separation and route registration.
+
+## What this validates
+
+The Brain Foundation modules are wired into `main.py`; first use applies the Brain database migrations and creates a baseline brain version. The `/brain.html` control centre calls the protected `/brain/*` routes. Existing Phase 1 functionality remains present and its regression checks pass.
+
+## Not validated in this workspace
+
+- A real PostgreSQL database or a live Vercel deployment.
+- Live provider API keys, provider quotas, real-time search quality, YouTube result quality, or real network latency.
+- Cross-instance persistence of research sessions on Vercel (the current research session store uses ephemeral `/tmp`).
+- A trained standalone language model or extraction of private model weights/system prompts (not implemented and not part of this design).
+- Production code self-modification or automatic deployment. `upgrade_manager.py` is an isolated-workspace proposal framework only; it is not wired to overwrite the live app.
+- Phone, laptop, TV or smart-home control integrations.
+
+Before deploying, back up the production database, configure `CORA_ACCESS_PASSWORD` and a 32+ character `SESSION_SECRET`, add the AI provider keys you intend to use, and test the update on a staging deployment first.

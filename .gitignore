@@ -1,0 +1,11 @@
+.env
+*.db
+*.sqlite
+*.sqlite3
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.vercel/
+.venv/
+venv/
+node_modules/

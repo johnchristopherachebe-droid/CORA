@@ -8,3 +8,5 @@ CREATE TABLE IF NOT EXISTS builder_backups (id BIGSERIAL PRIMARY KEY, project_na
 CREATE TABLE IF NOT EXISTS cora_notes (id BIGSERIAL PRIMARY KEY, filename TEXT NOT NULL, content TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW());
 -- Phase 1: created/upgraded automatically on first use.
 CREATE TABLE IF NOT EXISTS cora_agent_tasks (id BIGSERIAL PRIMARY KEY, goal TEXT NOT NULL, status TEXT NOT NULL, plan TEXT NOT NULL DEFAULT '[]', log TEXT NOT NULL DEFAULT '[]', result TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+
+-- Brain Foundation tables are created automatically by cora_brain_db.py on first Brain API use.
